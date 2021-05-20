@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+import pathlib
+import shutil
+
+ # qgis_process run script:avaframeqgis -- DEM=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/slideTopo.asc REL=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/REL/slideRelease.shp PROFILE=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/LINES/slideProfiles_AB.shp
+
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
@@ -12,13 +17,15 @@ from qgis.core import (QgsProcessing,
 from qgis import processing
 import avaframe
 from avaframe.in3Utils import initializeProject as iP
+from avaframe import runOperational as runOp
 
 
 class AvaFrameQGis(QgsProcessingAlgorithm):
 
     DEM = 'DEM'
+    REL = 'REL'
+    PROFILE = 'PROFILE'
     OUTPUT = 'OUTPUT'
-    INPUT = 'INPUT'
 
     def tr(self, string):
         """
@@ -49,10 +56,20 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config=None):
 
-        print('In init')
-        # self.addParameter(QgsProcessingParameterRasterLayer(
-        #     self.DEM,
-        #     self.tr("DEM layer")))
+        self.addParameter(QgsProcessingParameterRasterLayer(
+            self.DEM,
+            self.tr("DEM layer")))
+
+        self.addParameter(QgsProcessingParameterFeatureSource(
+                self.REL,
+                self.tr('Release layer'),
+            [QgsProcessing.TypeVectorAnyGeometry]
+            ))
+
+        self.addParameter(QgsProcessingParameterFeatureSource(
+            self.PROFILE,
+            self.tr("Profile layer"),
+            [QgsProcessing.TypeVectorLine]))
 
         # We add a feature sink in which to store our processed features (this
         # usually takes the form of a newly created vector layer when the
@@ -64,30 +81,66 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         #     )
         # )
 
+    def getSHPParts(self, base):
+        """ Get all files of a shapefile"""
+
+        globBase = base.parent
+        globbed = globBase.glob(base.stem + '.*')
+
+        return globbed
+
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
 
-        # Retrieve the feature source and sink. The 'dest_id' variable is used
-        # to uniquely identify the feature sink, and must be included in the
-        # dictionary returned by the processAlgorithm function.
-        # source = self.parameterAsSource(
-        #     parameters,
-        #     self.INPUT,
-        #     context
-        # )
+        sourceDEM = self.parameterAsRasterLayer(parameters, self.DEM, context)
+        if sourceDEM is None:
+            raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
 
-        # # If source was not found, throw an exception to indicate that the algorithm
-        # # encountered a fatal error. The exception text can be any string, but in this
-        # # case we use the pre-built invalidSourceError method to return a standard
-        # # helper text for when a source cannot be evaluated
-        # if source is None:
-        #     raise QgsProcessingException(self.invalidSourceError(parameters, self.INPUT))
+        sourceREL = self.parameterAsVectorLayer(parameters, self.REL, context)
+        if sourceREL is None:
+            raise QgsProcessingException(self.invalidSourceError(parameters, self.REL))
 
-        iP.initializeFolderStruct('/home/felix/tmp/TestAva2')
+        sourcePROFILE = self.parameterAsVectorLayer(parameters, self.PROFILE, context)
+        if sourcePROFILE is None:
+            raise QgsProcessingException(self.invalidSourceError(parameters, self.PROFILE))
+
+        # create folder structure
+        # TODO: make sure directory is empty
+        targetDir = '/home/felix/tmp/TestAva2'
+        iP.initializeFolderStruct(targetDir)
+
+        feedback.pushInfo(sourceDEM.source())
+
+        # copy DEM
+        sourceDEMPath = pathlib.Path(sourceDEM.source())
+        targetDEMPath = pathlib.Path(targetDir) / 'Inputs'
+        shutil.copy(sourceDEMPath, targetDEMPath)
+
+        # copy all release shapefile parts
+        sourceRELPath = pathlib.Path(sourceREL.source())
+        targetRELPath = pathlib.Path(targetDir) / 'Inputs' / 'REL'
+
+        shpParts = self.getSHPParts(sourceRELPath)
+        for shpPart in shpParts:
+            shutil.copy(shpPart, targetRELPath)
+
+        # copy all Profile shapefile parts
+        sourcePROFILEPath = pathlib.Path(sourcePROFILE.source())
+        targetPROFILEPath = pathlib.Path(targetDir) / 'Inputs' / 'LINES'
+
+        shpParts = self.getSHPParts(sourcePROFILEPath)
+        for shpPart in shpParts:
+            shutil.copy(shpPart, targetPROFILEPath)
+
+
+        runOp.runOperational(str(targetDir))
+
+        # Copy input data
         dest_id = 0
         feedback.pushInfo('Hallo')
+
         # (sink, dest_id) = self.parameterAsSink(
         #     parameters,
         #     self.OUTPUT,

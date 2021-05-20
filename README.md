@@ -1,7 +1,10 @@
 # QGisAF
 The QGis to AvaFrame Connector
 
+
+
 On Linux: if avaframe is installed in system, import avaframe just works...
+i.e. Linux and MacOS use the system python
 
 For windows this might be a lead:
 
