@@ -25,6 +25,7 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
     DEM = 'DEM'
     REL = 'REL'
     PROFILE = 'PROFILE'
+    SPLITPOINTS = 'SPLITPOINTS'
     OUTPUT = 'OUTPUT'
 
     def tr(self, string):
@@ -71,6 +72,11 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             self.tr("Profile layer"),
             [QgsProcessing.TypeVectorLine]))
 
+        self.addParameter(QgsProcessingParameterFeatureSource(
+            self.SPLITPOINTS,
+            self.tr("Splitpoint layer"),
+            [QgsProcessing.TypeVectorPoint]))
+
         # We add a feature sink in which to store our processed features (this
         # usually takes the form of a newly created vector layer when the
         # algorithm is run in QGIS).
@@ -106,6 +112,10 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         if sourcePROFILE is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.PROFILE))
 
+        sourceSPLITPOINTS= self.parameterAsVectorLayer(parameters, self.SPLITPOINTS, context)
+        if sourceSPLITPOINTS is None:
+            raise QgsProcessingException(self.invalidSourceError(parameters, self.SPLITPOINTS))
+
         # create folder structure
         # TODO: make sure directory is empty
         targetDir = '/home/felix/tmp/TestAva2'
@@ -134,6 +144,13 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         for shpPart in shpParts:
             shutil.copy(shpPart, targetPROFILEPath)
 
+        # copy all Splitpoint shapefile parts
+        sourceSPLITPOINTSPath = pathlib.Path(sourceSPLITPOINTS.source())
+        targetSPLITPOINTSPath = pathlib.Path(targetDir) / 'Inputs' / 'POINTS'
+
+        shpParts = self.getSHPParts(sourceSPLITPOINTSPath)
+        for shpPart in shpParts:
+            shutil.copy(shpPart, targetSPLITPOINTSPath)
 
         runOp.runOperational(str(targetDir))
 
