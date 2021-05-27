@@ -10,6 +10,7 @@ from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
                        QgsFeatureRequest,
                        QgsVectorLayer,
+                       QgsRasterLayer,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
                        QgsProcessingContext,
@@ -17,7 +18,9 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterVectorLayer,
                        QgsProcessingParameterVectorDestination,
+                       QgsProcessingParameterRasterDestination,
                        QgsProcessingOutputVectorLayer,
+                       QgsProcessingOutputRasterLayer,
                        QgsProcessingParameterFeatureSink)
 from qgis import processing
 import avaframe
@@ -32,6 +35,7 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
     PROFILE = 'PROFILE'
     SPLITPOINTS = 'SPLITPOINTS'
     OUTPUT = 'OUTPUT'
+    OUTPPR = 'OUTPPR'
 
     def tr(self, string):
         """
@@ -102,6 +106,17 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             self.tr("Output layer"),
             QgsProcessing.TypeVectorAnyGeometry))
 
+        # self.addOutput(QgsProcessingOutputRasterLayer(
+        #     self.OUTPPR,
+        #     self.tr("PPR layer"),
+        #     QgsProcessing.TypeRaster))
+
+        self.addOutput(
+            QgsProcessingOutputRasterLayer(
+                self.OUTPPR,
+                self.tr('Raster output')
+            )
+        )
 
     def getSHPParts(self, base):
         """ Get all files of a shapefile"""
@@ -181,9 +196,10 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             except shutil.SameFileError:
                 pass
 
-        abResultsSource = runOp.runOperational(str(targetDir))
+        abResultsSource, rasterResultSource = runOp.runOperational(str(targetDir))
 
         print(abResultsSource)
+        print(rasterResultSource)
 
         shpLayer = str(abResultsSource) + '.shp'
 
@@ -191,6 +207,7 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         # vlayer = QgsVectorLayer(data_source, layer_name, provider_name)
 
         source = QgsVectorLayer(shpLayer, "Alpha Beta", "ogr")
+        rstLayer = QgsRasterLayer(rasterResultSource, "PPR")
 
         # Copy input data
         feedback.pushInfo('Hallo')
@@ -239,7 +256,13 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
                                               context.project(),
                                               self.OUTPUT))
 
-        return {self.OUTPUT: source.id()}
+        context.temporaryLayerStore().addMapLayer(rstLayer)
+        context.addLayerToLoadOnCompletion(
+            rstLayer.id(),
+            QgsProcessingContext.LayerDetails('raster layer',
+                                              context.project(),
+                                              self.OUTPPR))
+        return {self.OUTPUT: source, self.OUTPPR: rstLayer}
 
         # return {self.OUTPUT: source}
 
