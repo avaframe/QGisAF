@@ -8,11 +8,16 @@ import shutil
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
+                       QgsFeatureRequest,
+                       QgsVectorLayer,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
+                       QgsProcessingContext,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterRasterLayer,
-                       QgsProcessingParameterFeatureSink,
+                       QgsProcessingParameterVectorLayer,
+                       QgsProcessingParameterVectorDestination,
+                       QgsProcessingOutputVectorLayer,
                        QgsProcessingParameterFeatureSink)
 from qgis import processing
 import avaframe
@@ -77,15 +82,26 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             self.tr("Splitpoint layer"),
             [QgsProcessing.TypeVectorPoint]))
 
+        # self.addParameter(QgsProcessingParameterFeatureSink(
+        #     self.OUTPUT,
+        #     self.tr("OUTPUT"),
+        #     [QgsProcessing.TypeVectorAnyGeometry]))
+
         # We add a feature sink in which to store our processed features (this
         # usually takes the form of a newly created vector layer when the
         # algorithm is run in QGIS).
         # self.addParameter(
-        #     QgsProcessingParameterFeatureSink(
+        #     # QgsProcessingParameterFeatureSink(
+        #     QgsProcessingOutputVectorLayer(
         #         self.OUTPUT,
         #         self.tr('Output layer')
         #     )
         # )
+        self.addOutput(QgsProcessingOutputVectorLayer(
+            self.OUTPUT,
+            self.tr("Output layer"),
+            QgsProcessing.TypeVectorAnyGeometry))
+
 
     def getSHPParts(self, base):
         """ Get all files of a shapefile"""
@@ -126,7 +142,11 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         # copy DEM
         sourceDEMPath = pathlib.Path(sourceDEM.source())
         targetDEMPath = pathlib.Path(targetDir) / 'Inputs'
-        shutil.copy(sourceDEMPath, targetDEMPath)
+        try:
+            shutil.copy(sourceDEMPath, targetDEMPath)
+        except shutil.SameFileError:
+            pass
+
 
         # copy all release shapefile parts
         sourceRELPath = pathlib.Path(sourceREL.source())
@@ -134,7 +154,10 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         shpParts = self.getSHPParts(sourceRELPath)
         for shpPart in shpParts:
-            shutil.copy(shpPart, targetRELPath)
+            try:
+                shutil.copy(shpPart, targetRELPath)
+            except shutil.SameFileError:
+                pass
 
         # copy all Profile shapefile parts
         sourcePROFILEPath = pathlib.Path(sourcePROFILE.source())
@@ -142,7 +165,10 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         shpParts = self.getSHPParts(sourcePROFILEPath)
         for shpPart in shpParts:
-            shutil.copy(shpPart, targetPROFILEPath)
+            try:
+                shutil.copy(shpPart, targetPROFILEPath)
+            except shutil.SameFileError:
+                pass
 
         # copy all Splitpoint shapefile parts
         sourceSPLITPOINTSPath = pathlib.Path(sourceSPLITPOINTS.source())
@@ -150,22 +176,36 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         shpParts = self.getSHPParts(sourceSPLITPOINTSPath)
         for shpPart in shpParts:
-            shutil.copy(shpPart, targetSPLITPOINTSPath)
+            try:
+                shutil.copy(shpPart, targetSPLITPOINTSPath)
+            except shutil.SameFileError:
+                pass
 
-        runOp.runOperational(str(targetDir))
+        abResultsSource = runOp.runOperational(str(targetDir))
+
+        print(abResultsSource)
+
+        shpLayer = str(abResultsSource) + '.shp'
+
+        # The format is:
+        # vlayer = QgsVectorLayer(data_source, layer_name, provider_name)
+
+        source = QgsVectorLayer(shpLayer, "Alpha Beta", "ogr")
 
         # Copy input data
-        dest_id = 0
         feedback.pushInfo('Hallo')
 
+        # dest_id=0
         # (sink, dest_id) = self.parameterAsSink(
         #     parameters,
         #     self.OUTPUT,
         #     context,
         #     source.fields(),
         #     source.wkbType(),
-        #     source.sourceCrs()
-        # )
+        #     source.sourceCrs())
+
+        # features = source.getFeatures(QgsFeatureRequest())
+        # sink.addFeatures(features, QgsFeatureSink.FastInsert)
 
         # # Send some information to the user
         # feedback.pushInfo('CRS is {}'.format(source.sourceCrs().authid()))
@@ -192,31 +232,16 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         #     # Update the progress bar
         #     feedback.setProgress(int(current * total))
+        context.temporaryLayerStore().addMapLayer(source)
+        context.addLayerToLoadOnCompletion(
+            source.id(),
+            QgsProcessingContext.LayerDetails('OGR layer',
+                                              context.project(),
+                                              self.OUTPUT))
 
-        # # To run another Processing algorithm as part of this algorithm, you can use
-        # # processing.run(...). Make sure you pass the current context and feedback
-        # # to processing.run to ensure that all temporary layer outputs are available
-        # # to the executed algorithm, and that the executed algorithm can send feedback
-        # # reports to the user (and correctly handle cancellation and progress reports!)
-        # if False:
-        #     buffered_layer = processing.run("native:buffer", {
-        #         'INPUT': dest_id,
-        #         'DISTANCE': 1.5,
-        #         'SEGMENTS': 5,
-        #         'END_CAP_STYLE': 0,
-        #         'JOIN_STYLE': 0,
-        #         'MITER_LIMIT': 2,
-        #         'DISSOLVE': False,
-        #         'OUTPUT': 'memory:'
-        #     }, context=context, feedback=feedback)['OUTPUT']
+        return {self.OUTPUT: source.id()}
 
-        # # Return the results of the algorithm. In this case our only result is
-        # # the feature sink which contains the processed features, but some
-        # # algorithms may return multiple feature sinks, calculated numeric
-        # # statistics, etc. These should all be included in the returned
-        # # dictionary, with keys matching the feature corresponding parameter
-        # # or output names.
-        return {self.OUTPUT: dest_id}
+        # return {self.OUTPUT: source}
 
 
 # Used to develop together with plugin SCRIPT RUNNER
