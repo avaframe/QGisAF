@@ -10,6 +10,7 @@ from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
                        QgsFeatureRequest,
                        QgsVectorLayer,
+                       QgsProject,
                        QgsRasterLayer,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
@@ -19,6 +20,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterVectorLayer,
                        QgsProcessingParameterVectorDestination,
                        QgsProcessingParameterRasterDestination,
+                       QgsProcessingLayerPostProcessorInterface,
                        QgsProcessingOutputVectorLayer,
                        QgsProcessingOutputRasterLayer,
                        QgsProcessingParameterFeatureSink)
@@ -27,6 +29,14 @@ import avaframe
 from avaframe.in3Utils import initializeProject as iP
 from avaframe import runOperational as runOp
 
+
+class Renamer (QgsProcessingLayerPostProcessorInterface):
+    def __init__(self, layer_name):
+        self.name = layer_name
+        super().__init__()
+
+    def postProcessLayer(self, layer, context, feedback):
+        layer.setName(self.name)
 
 class AvaFrameQGis(QgsProcessingAlgorithm):
 
@@ -196,8 +206,10 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             except shutil.SameFileError:
                 pass
 
-        abResultsSource, rasterResultSource = runOp.runOperational(str(targetDir))
+        # abResultsSource, rasterResultSource = runOp.runOperational(str(targetDir))
 
+        abResultsSource = '/home/felix/tmp/TestAva2/Outputs/com2AB/com2AB_Results'
+        rasterResultSource = '/home/felix/tmp/TestAva2/Outputs/com1DFA/peakFiles/slideRelease_null_dfa_0.15500_ppr.asc'
         print(abResultsSource)
         print(rasterResultSource)
 
@@ -206,11 +218,24 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         # The format is:
         # vlayer = QgsVectorLayer(data_source, layer_name, provider_name)
 
-        source = QgsVectorLayer(shpLayer, "Alpha Beta", "ogr")
+        source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
         rstLayer = QgsRasterLayer(rasterResultSource, "PPR")
 
         # Copy input data
         feedback.pushInfo('Hallo')
+
+
+        # Add SamosAT Group
+        Root = QgsProject.instance().layerTreeRoot()
+
+        # See if SamosAT group exists
+        # if not, create
+        SatGroup = Root.findGroup("com1DFA")
+        if SatGroup:
+            feedback.pushDebugInfo('Found')
+        else:
+            feedback.pushDebugInfo('Not Found')
+            SatGroup = Root.insertGroup(0, "com1DFA")
 
         # dest_id=0
         # (sink, dest_id) = self.parameterAsSink(
@@ -249,6 +274,19 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         #     # Update the progress bar
         #     feedback.setProgress(int(current * total))
+
+        qmlFile = '/home/felix/Versioning/QGIS/Legends/ramms_MAXP.qml'
+
+        # should work, but doesn't...
+        rstLayer.setName('ThisIsDaStuff')
+        QgsProject.instance().addMapLayer(rstLayer, False)
+        SatGroup.addLayer(rstLayer)
+
+        rstLayer.loadNamedStyle(qmlFile)
+
+        global renamer
+        renamer = Renamer('DiffBuf')
+
         context.temporaryLayerStore().addMapLayer(source)
         context.addLayerToLoadOnCompletion(
             source.id(),
@@ -262,6 +300,12 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             QgsProcessingContext.LayerDetails('raster layer',
                                               context.project(),
                                               self.OUTPPR))
+
+        context.layerToLoadOnCompletionDetails(rstLayer.id()).setPostProcessor(renamer)
+        # self.ImportDFA(sourceDIR, Sim, SatGroup)
+
+        # iface.layerTreeView().collapseAllNodes()
+
         return {self.OUTPUT: source, self.OUTPPR: rstLayer}
 
         # return {self.OUTPUT: source}
