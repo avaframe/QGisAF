@@ -16,6 +16,8 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingAlgorithm,
                        QgsProcessingContext,
                        QgsProcessingParameterFeatureSource,
+                       QgsProcessingParameterString,
+                       QgsProcessingParameterBoolean,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterVectorLayer,
                        QgsProcessingParameterVectorDestination,
@@ -46,6 +48,8 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
     SPLITPOINTS = 'SPLITPOINTS'
     OUTPUT = 'OUTPUT'
     OUTPPR = 'OUTPPR'
+    FOLNAME = 'FOLNAME'
+    SMALLAVA = 'SMALLAVA'
 
     def tr(self, string):
         """
@@ -83,7 +87,19 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterFeatureSource(
                 self.REL,
                 self.tr('Release layer'),
-            [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorAnyGeometry]
+            ))
+
+        self.addParameter(QgsProcessingParameterString(
+                self.FOLNAME,
+                self.tr('Folder Name'),
+                optional=True
+            ))
+
+        self.addParameter(QgsProcessingParameterBoolean(
+                self.SMALLAVA,
+                self.tr('Small Avalanche '),
+                optional=True
             ))
 
         self.addParameter(QgsProcessingParameterFeatureSource(
@@ -94,7 +110,9 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterFeatureSource(
             self.SPLITPOINTS,
             self.tr("Splitpoint layer"),
-            [QgsProcessing.TypeVectorPoint]))
+            # defaultValue = 5,
+            optional=True,
+            types=[QgsProcessing.TypeVectorPoint]))
 
         # self.addParameter(QgsProcessingParameterFeatureSink(
         #     self.OUTPUT,
