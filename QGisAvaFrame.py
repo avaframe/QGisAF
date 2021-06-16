@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import pathlib
 import shutil
+import pandas
+pandas.set_option('display.max_colwidth', 10)
 
  # qgis_process run script:avaframeqgis -- DEM=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/slideTopo.asc REL=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/REL/slideRelease.shp PROFILE=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/LINES/slideProfiles_AB.shp
 
@@ -224,12 +226,12 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             except shutil.SameFileError:
                 pass
 
-        # abResultsSource, rasterResultSource = runOp.runOperational(str(targetDir))
+        abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
 
-        abResultsSource = '/home/felix/tmp/TestAva2/Outputs/com2AB/com2AB_Results'
-        rasterResultSource = '/home/felix/tmp/TestAva2/Outputs/com1DFA/peakFiles/slideRelease_null_dfa_0.15500_ppr.asc'
+        # abResultsSource = '/home/felix/tmp/TestAva2/Outputs/com2AB/com2AB_Results'
+        # rasterResultSource = '/home/felix/tmp/TestAva2/Outputs/com1DFA/peakFiles/slideRelease_null_dfa_0.15500_ppr.asc'
         print(abResultsSource)
-        print(rasterResultSource)
+        print(rasterResults)
 
         shpLayer = str(abResultsSource) + '.shp'
 
@@ -237,7 +239,11 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         # vlayer = QgsVectorLayer(data_source, layer_name, provider_name)
 
         source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
-        rstLayer = QgsRasterLayer(rasterResultSource, "PPR")
+
+        for index, row in rasterResults.iterrows():
+            print(row["files"], row["resType"])
+
+        rstLayer = QgsRasterLayer(str(rasterResults), "PPR")
 
         # Copy input data
         feedback.pushInfo('Hallo')
