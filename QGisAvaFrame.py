@@ -27,6 +27,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingLayerPostProcessorInterface,
                        QgsProcessingOutputVectorLayer,
                        QgsProcessingOutputRasterLayer,
+                       QgsProcessingOutputMultipleLayers,
                        QgsProcessingParameterFeatureSink)
 from qgis import processing
 import avaframe
@@ -142,9 +143,8 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         #     QgsProcessing.TypeRaster))
 
         self.addOutput(
-            QgsProcessingOutputRasterLayer(
+        QgsProcessingOutputMultipleLayers(
                 self.OUTPPR,
-                self.tr('Raster output')
             )
         )
 
@@ -228,11 +228,6 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
 
-        # abResultsSource = '/home/felix/tmp/TestAva2/Outputs/com2AB/com2AB_Results'
-        # rasterResultSource = '/home/felix/tmp/TestAva2/Outputs/com1DFA/peakFiles/slideRelease_null_dfa_0.15500_ppr.asc'
-        print(abResultsSource)
-        print(rasterResults)
-
         shpLayer = str(abResultsSource) + '.shp'
 
         # The format is:
@@ -240,76 +235,58 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
 
-        for index, row in rasterResults.iterrows():
-            print(row["files"], row["resType"])
-
-        rstLayer = QgsRasterLayer(str(rasterResults), "PPR")
 
         # Copy input data
         feedback.pushInfo('Hallo')
 
 
-        # Add SamosAT Group
-        Root = QgsProject.instance().layerTreeRoot()
+        qmls = dict()
+        qmls['ppr'] = './QGisStyles/ppr.qml'
+        qmls['pfd'] = '/home/felix/Versioning/QGIS/Legends/ramms_MAXH.qml'
+        qmls['pfv'] = './QGisStyles/pfv.qml'
 
-        # See if SamosAT group exists
-        # if not, create
-        SatGroup = Root.findGroup("com1DFA")
-        if SatGroup:
-            feedback.pushDebugInfo('Found')
-        else:
-            feedback.pushDebugInfo('Not Found')
-            SatGroup = Root.insertGroup(0, "com1DFA")
 
-        # dest_id=0
-        # (sink, dest_id) = self.parameterAsSink(
-        #     parameters,
-        #     self.OUTPUT,
-        #     context,
-        #     source.fields(),
-        #     source.wkbType(),
-        #     source.sourceCrs())
+        allRasterLayers = list()
+        for index, row in rasterResults.iterrows():
+            print(row["files"], row["resType"])
+            rstLayer = QgsRasterLayer(str(row['files']), row['names'])
+            rstLayer.loadNamedStyle(qmls[row['resType']])
 
-        # features = source.getFeatures(QgsFeatureRequest())
-        # sink.addFeatures(features, QgsFeatureSink.FastInsert)
-
-        # # Send some information to the user
-        # feedback.pushInfo('CRS is {}'.format(source.sourceCrs().authid()))
-
-        # # If sink was not created, throw an exception to indicate that the algorithm
-        # # encountered a fatal error. The exception text can be any string, but in this
-        # # case we use the pre-built invalidSinkError method to return a standard
-        # # helper text for when a sink cannot be evaluated
-        # if sink is None:
-        #     raise QgsProcessingException(self.invalidSinkError(parameters, self.OUTPUT))
-
-        # # Compute the number of steps to display within the progress bar and
-        # # get features from source
-        # total = 100.0 / source.featureCount() if source.featureCount() else 0
-        # features = source.getFeatures()
-
-        # for current, feature in enumerate(features):
-        #     # Stop the algorithm if cancel button has been clicked
-        #     if feedback.isCanceled():
-        #         break
-
-        #     # Add a feature in the sink
-        #     sink.addFeature(feature, QgsFeatureSink.FastInsert)
-
-        #     # Update the progress bar
-        #     feedback.setProgress(int(current * total))
-
-        qmlFile = '/home/felix/Versioning/QGIS/Legends/ramms_MAXP.qml'
+            allRasterLayers.append(rstLayer)
 
         # should work, but doesn't...
-        rstLayer.setName('ThisIsDaStuff')
-        QgsProject.instance().addMapLayer(rstLayer, False)
-        SatGroup.addLayer(rstLayer)
+        # rstLayer.setName('ThisIsDaStuff')
 
-        rstLayer.loadNamedStyle(qmlFile)
 
-        global renamer
-        renamer = Renamer('DiffBuf')
+        # # Add SamosAT Group
+        # Root = QgsProject.instance().layerTreeRoot()
+
+        # # See if SamosAT group exists
+        # # if not, create
+        # SatGroup = Root.findGroup("com1DFA")
+        # if SatGroup:
+        #     feedback.pushDebugInfo('Found')
+        # else:
+        #     feedback.pushDebugInfo('Not Found')
+        #     SatGroup = Root.insertGroup(0, "com1DFA")
+
+        context.temporaryLayerStore().addMapLayers(allRasterLayers)
+
+        for item in allRasterLayers:
+            context.addLayerToLoadOnCompletion(
+                item.id(),
+                QgsProcessingContext.LayerDetails('raster layer',
+                                              context.project(),
+                                              self.OUTPPR))
+
+        # context.addLayerToLoadOnCompletion(
+        #     allRasterLayers[0].id(),
+        #     QgsProcessingContext.LayerDetails('raster layer',
+        #                                       context.project(),
+        #                                       self.OUTPPR))
+
+        # global renamer
+        # renamer = Renamer('DiffBuf')
 
         context.temporaryLayerStore().addMapLayer(source)
         context.addLayerToLoadOnCompletion(
@@ -318,19 +295,21 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
                                               context.project(),
                                               self.OUTPUT))
 
-        context.temporaryLayerStore().addMapLayer(rstLayer)
-        context.addLayerToLoadOnCompletion(
-            rstLayer.id(),
-            QgsProcessingContext.LayerDetails('raster layer',
-                                              context.project(),
-                                              self.OUTPPR))
+        # context.temporaryLayerStore().addMapLayer(rstLayer)
+        # context.addLayerToLoadOnCompletion(
+        #     rstLayer.id(),
+        #     QgsProcessingContext.LayerDetails('raster layer',
+        #                                       context.project(),
+        #                                       self.OUTPPR))
 
-        context.layerToLoadOnCompletionDetails(rstLayer.id()).setPostProcessor(renamer)
+        # context.layerToLoadOnCompletionDetails(rstLayer.id()).setPostProcessor(renamer)
+
         # self.ImportDFA(sourceDIR, Sim, SatGroup)
 
         # iface.layerTreeView().collapseAllNodes()
 
-        return {self.OUTPUT: source, self.OUTPPR: rstLayer}
+        return {self.OUTPUT: source, self.OUTPPR: allRasterLayers}
+        # return {self.OUTPUT: source, self.OUTPPR: allRasterLayers[0]}
 
         # return {self.OUTPUT: source}
 
