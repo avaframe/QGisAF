@@ -47,6 +47,8 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
     DEM = 'DEM'
     REL = 'REL'
+    ENT = 'ENT'
+    RES = 'RES'
     PROFILE = 'PROFILE'
     SPLITPOINTS = 'SPLITPOINTS'
     OUTPUT = 'OUTPUT'
@@ -93,6 +95,25 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
                 [QgsProcessing.TypeVectorAnyGeometry]
             ))
 
+        self.addParameter(QgsProcessingParameterFeatureSource(
+            self.PROFILE,
+            self.tr("Profile layer"),
+            [QgsProcessing.TypeVectorLine]))
+
+        self.addParameter(QgsProcessingParameterFeatureSource(
+                self.ENT,
+                self.tr('Entrainment layer'),
+                optional=True,
+                types=[QgsProcessing.TypeVectorAnyGeometry]
+            ))
+
+        self.addParameter(QgsProcessingParameterFeatureSource(
+                self.RES,
+                self.tr('Resistance layer'),
+                optional=True,
+                types=[QgsProcessing.TypeVectorAnyGeometry]
+            ))
+
         self.addParameter(QgsProcessingParameterString(
                 self.FOLNAME,
                 self.tr('Folder Name'),
@@ -105,10 +126,6 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
                 optional=True
             ))
 
-        self.addParameter(QgsProcessingParameterFeatureSource(
-            self.PROFILE,
-            self.tr("Profile layer"),
-            [QgsProcessing.TypeVectorLine]))
 
         self.addParameter(QgsProcessingParameterFeatureSource(
             self.SPLITPOINTS,
@@ -169,33 +186,34 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         if sourceREL is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.REL))
 
+        sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
+
         sourcePROFILE = self.parameterAsVectorLayer(parameters, self.PROFILE, context)
-        if sourcePROFILE is None:
-            raise QgsProcessingException(self.invalidSourceError(parameters, self.PROFILE))
+        # if sourcePROFILE is None:
+        #     raise QgsProcessingException(self.invalidSourceError(parameters, self.PROFILE))
 
         sourceSPLITPOINTS= self.parameterAsVectorLayer(parameters, self.SPLITPOINTS, context)
-        if sourceSPLITPOINTS is None:
-            raise QgsProcessingException(self.invalidSourceError(parameters, self.SPLITPOINTS))
+        # if sourceSPLITPOINTS is None:
+        #     raise QgsProcessingException(self.invalidSourceError(parameters, self.SPLITPOINTS))
 
         # create folder structure
         # TODO: make sure directory is empty
-        targetDir = '/home/felix/tmp/TestAva2'
-        iP.initializeFolderStruct(targetDir)
+        targetDir = pathlib.Path('.') / 'TestDir'
+        iP.initializeFolderStruct(targetDir, removeExisting=True)
 
         feedback.pushInfo(sourceDEM.source())
 
         # copy DEM
         sourceDEMPath = pathlib.Path(sourceDEM.source())
-        targetDEMPath = pathlib.Path(targetDir) / 'Inputs'
+        targetDEMPath = targetDir / 'Inputs'
         try:
             shutil.copy(sourceDEMPath, targetDEMPath)
         except shutil.SameFileError:
             pass
 
-
         # copy all release shapefile parts
         sourceRELPath = pathlib.Path(sourceREL.source())
-        targetRELPath = pathlib.Path(targetDir) / 'Inputs' / 'REL'
+        targetRELPath = targetDir / 'Inputs' / 'REL'
 
         shpParts = self.getSHPParts(sourceRELPath)
         for shpPart in shpParts:
@@ -204,9 +222,21 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             except shutil.SameFileError:
                 pass
 
+        # copy all entrainment shapefile parts
+        if sourceENT is not None:
+            sourceENTPath = pathlib.Path(sourceENT.source())
+            targetENTPath = targetDir / 'Inputs' / 'ENT'
+
+            shpParts = self.getSHPParts(sourceENTPath)
+            for shpPart in shpParts:
+                try:
+                    shutil.copy(shpPart, targetENTPath)
+                except shutil.SameFileError:
+                    pass
+
         # copy all Profile shapefile parts
         sourcePROFILEPath = pathlib.Path(sourcePROFILE.source())
-        targetPROFILEPath = pathlib.Path(targetDir) / 'Inputs' / 'LINES'
+        targetPROFILEPath = targetDir / 'Inputs' / 'LINES'
 
         shpParts = self.getSHPParts(sourcePROFILEPath)
         for shpPart in shpParts:
@@ -217,7 +247,7 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         # copy all Splitpoint shapefile parts
         sourceSPLITPOINTSPath = pathlib.Path(sourceSPLITPOINTS.source())
-        targetSPLITPOINTSPath = pathlib.Path(targetDir) / 'Inputs' / 'POINTS'
+        targetSPLITPOINTSPath = targetDir / 'Inputs' / 'POINTS'
 
         shpParts = self.getSHPParts(sourceSPLITPOINTSPath)
         for shpPart in shpParts:
@@ -225,6 +255,8 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
                 shutil.copy(shpPart, targetSPLITPOINTSPath)
             except shutil.SameFileError:
                 pass
+
+        feedback.pushInfo('Starting the simulations')
 
         abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
 
@@ -235,14 +267,9 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
 
-
-        # Copy input data
-        feedback.pushInfo('Hallo')
-
-
         qmls = dict()
         qmls['ppr'] = './QGisStyles/ppr.qml'
-        qmls['pfd'] = '/home/felix/Versioning/QGIS/Legends/ramms_MAXH.qml'
+        qmls['pfd'] = './QGisStyles/pfd.qml'
         qmls['pfv'] = './QGisStyles/pfv.qml'
 
 
@@ -307,6 +334,12 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         # self.ImportDFA(sourceDIR, Sim, SatGroup)
 
         # iface.layerTreeView().collapseAllNodes()
+
+        feedback.pushInfo('---------------------------------')
+        feedback.pushInfo('Done, find results and logs here:')
+        feedback.pushInfo(str(targetDir.resolve()))
+        feedback.pushInfo('---------------------------------')
+
 
         return {self.OUTPUT: source, self.OUTPPR: allRasterLayers}
         # return {self.OUTPUT: source, self.OUTPPR: allRasterLayers[0]}

@@ -1,5 +1,5 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis maxScale="0" minScale="1e+08" styleCategories="AllStyleCategories" hasScaleBasedVisibilityFlag="0" version="3.18.3-Zürich">
+<qgis maxScale="1000" minScale="1e+08" styleCategories="AllStyleCategories" hasScaleBasedVisibilityFlag="0" version="3.18.3-Zürich">
   <flags>
     <Identifiable>1</Identifiable>
     <Removable>1</Removable>
@@ -22,40 +22,39 @@
     <provider>
       <resampling enabled="false" maxOversampling="2" zoomedInResamplingMethod="nearestNeighbour" zoomedOutResamplingMethod="nearestNeighbour"/>
     </provider>
-    <rasterrenderer classificationMax="100" nodataColor="" band="1" classificationMin="0" alphaBand="-1" type="singlebandpseudocolor" opacity="1">
+    <rasterrenderer classificationMax="0.66131252263468" nodataColor="" band="1" classificationMin="0" alphaBand="-1" type="singlebandpseudocolor" opacity="1">
       <rasterTransparency/>
       <minMaxOrigin>
-        <limits>None</limits>
+        <limits>CumulativeCut</limits>
         <extent>WholeRaster</extent>
-        <statAccuracy>Exact</statAccuracy>
+        <statAccuracy>Estimated</statAccuracy>
         <cumulativeCutLower>0.02</cumulativeCutLower>
         <cumulativeCutUpper>0.98</cumulativeCutUpper>
         <stdDevFactor>2</stdDevFactor>
       </minMaxOrigin>
       <rastershader>
-        <colorrampshader clip="0" maximumValue="100" labelPrecision="6" classificationMode="1" minimumValue="0" colorRampType="DISCRETE">
+        <colorrampshader clip="0" maximumValue="0.6613125226346804" labelPrecision="6" classificationMode="1" minimumValue="0" colorRampType="DISCRETE">
           <colorramp name="[source]" type="gradient">
             <Option type="Map">
-              <Option name="color1" type="QString" value="255,245,235,0"/>
-              <Option name="color2" type="QString" value="32,17,88,255"/>
+              <Option name="color1" type="QString" value="254,230,206,0"/>
+              <Option name="color2" type="QString" value="4,4,4,255"/>
               <Option name="discrete" type="QString" value="0"/>
               <Option name="rampType" type="QString" value="gradient"/>
-              <Option name="stops" type="QString" value="0.01;255,245,235,0:0.05;255,206,244,255:0.1;255,167,168,255:0.15;193,154,27,255:0.2;87,139,33,255:0.25;0,112,84,255:0.3;0,73,96,255"/>
+              <Option name="stops" type="QString" value="0.198462;254,230,206,0:0.396925;255,254,158,255:0.793849;244,171,67,255:1.19077;212,96,100,255:1.5877;145,49,110,255:1.98462;68,29,78,255"/>
             </Option>
-            <prop k="color1" v="255,245,235,0"/>
-            <prop k="color2" v="32,17,88,255"/>
+            <prop k="color1" v="254,230,206,0"/>
+            <prop k="color2" v="4,4,4,255"/>
             <prop k="discrete" v="0"/>
             <prop k="rampType" v="gradient"/>
-            <prop k="stops" v="0.01;255,245,235,0:0.05;255,206,244,255:0.1;255,167,168,255:0.15;193,154,27,255:0.2;87,139,33,255:0.25;0,112,84,255:0.3;0,73,96,255"/>
+            <prop k="stops" v="0.198462;254,230,206,0:0.396925;255,254,158,255:0.793849;244,171,67,255:1.19077;212,96,100,255:1.5877;145,49,110,255:1.98462;68,29,78,255"/>
           </colorramp>
-          <item color="#fff5eb" label="&lt;= 1 m/s" alpha="0" value="1"/>
-          <item color="#ffcef4" label="1 - 5 m/s" alpha="255" value="5"/>
-          <item color="#ffa7a8" label="5 - 10 m/s" alpha="255" value="10"/>
-          <item color="#c19a1b" label="10 - 15 m/s" alpha="255" value="15"/>
-          <item color="#578b21" label="15 - 20 m/s" alpha="255" value="20"/>
-          <item color="#007054" label="20 - 25 m/s" alpha="255" value="25"/>
-          <item color="#004960" label="25 - 30 m/s" alpha="255" value="30"/>
-          <item color="#201158" label="> 30 m/s" alpha="255" value="100"/>
+          <item color="#fee6ce" label=" &lt;= 0.5 m" alpha="0" value="0.5"/>
+          <item color="#fffe9e" label="0.5 - 1 m" alpha="255" value="1"/>
+          <item color="#f4ab43" label="1 - 2 m" alpha="255" value="2"/>
+          <item color="#d46064" label="2 -3 m" alpha="255" value="3"/>
+          <item color="#91316e" label="3 - 4 m" alpha="255" value="4"/>
+          <item color="#441d4e" label="4 - 5 m" alpha="255" value="5"/>
+          <item color="#040404" label=" > 5 m" alpha="255" value="20"/>
           <rampLegendSettings maximumLabel="" prefix="" orientation="2" minimumLabel="" useContinuousLegend="1" suffix="" direction="0">
             <numericFormat id="basic">
               <Option type="Map">
