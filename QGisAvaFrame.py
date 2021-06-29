@@ -23,6 +23,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterVectorLayer,
                        QgsProcessingParameterVectorDestination,
+                       QgsProcessingParameterFolderDestination,
                        QgsProcessingParameterRasterDestination,
                        QgsProcessingLayerPostProcessorInterface,
                        QgsProcessingOutputVectorLayer,
@@ -53,7 +54,7 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
     SPLITPOINTS = 'SPLITPOINTS'
     OUTPUT = 'OUTPUT'
     OUTPPR = 'OUTPPR'
-    FOLNAME = 'FOLNAME'
+    FOLDEST = 'FOLDEST'
     SMALLAVA = 'SMALLAVA'
 
     def tr(self, string):
@@ -100,6 +101,12 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             self.tr("Profile layer"),
             [QgsProcessing.TypeVectorLine]))
 
+
+        self.addParameter(QgsProcessingParameterFolderDestination(
+                self.FOLDEST,
+                self.tr('Destination folder')
+            ))
+
         self.addParameter(QgsProcessingParameterFeatureSource(
                 self.ENT,
                 self.tr('Entrainment layer'),
@@ -112,12 +119,6 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
                 self.tr('Resistance layer'),
                 optional=True,
                 types=[QgsProcessing.TypeVectorAnyGeometry]
-            ))
-
-        self.addParameter(QgsProcessingParameterString(
-                self.FOLNAME,
-                self.tr('Folder Name'),
-                optional=True
             ))
 
         self.addParameter(QgsProcessingParameterBoolean(
@@ -188,6 +189,8 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
 
+        sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
+
         sourcePROFILE = self.parameterAsVectorLayer(parameters, self.PROFILE, context)
         # if sourcePROFILE is None:
         #     raise QgsProcessingException(self.invalidSourceError(parameters, self.PROFILE))
@@ -198,7 +201,8 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         # create folder structure
         # TODO: make sure directory is empty
-        targetDir = pathlib.Path('.') / 'TestDir'
+        # targetDir = pathlib.Path('.') / 'TestDir'
+        targetDir = pathlib.Path(sourceFOLDEST)
         iP.initializeFolderStruct(targetDir, removeExisting=True)
 
         feedback.pushInfo(sourceDEM.source())
@@ -354,4 +358,3 @@ def run_script(iface):
     ProfileLayer = ''
     DGMSource = ''
     print('In run script')
-
