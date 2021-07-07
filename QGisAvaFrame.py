@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-import pathlib
 import shutil
 import pandas
+import pathlib
+from pathlib import Path
 pandas.set_option('display.max_colwidth', 10)
 
  # qgis_process run script:avaframeqgis -- DEM=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/slideTopo.asc REL=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/REL/slideRelease.shp PROFILE=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/LINES/slideProfiles_AB.shp
@@ -101,6 +102,13 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             self.tr("Profile layer"),
             [QgsProcessing.TypeVectorLine]))
 
+        self.addParameter(QgsProcessingParameterFeatureSource(
+            self.SPLITPOINTS,
+            self.tr("Splitpoint layer"),
+            # defaultValue = 5,
+            optional=False,
+            types=[QgsProcessing.TypeVectorPoint]))
+
 
         self.addParameter(QgsProcessingParameterFolderDestination(
                 self.FOLDEST,
@@ -123,42 +131,14 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         self.addParameter(QgsProcessingParameterBoolean(
                 self.SMALLAVA,
-                self.tr('Small Avalanche '),
+                self.tr('Small Avalanche (for com2AB) '),
                 optional=True
             ))
 
-
-        self.addParameter(QgsProcessingParameterFeatureSource(
-            self.SPLITPOINTS,
-            self.tr("Splitpoint layer"),
-            # defaultValue = 5,
-            optional=True,
-            types=[QgsProcessing.TypeVectorPoint]))
-
-        # self.addParameter(QgsProcessingParameterFeatureSink(
-        #     self.OUTPUT,
-        #     self.tr("OUTPUT"),
-        #     [QgsProcessing.TypeVectorAnyGeometry]))
-
-        # We add a feature sink in which to store our processed features (this
-        # usually takes the form of a newly created vector layer when the
-        # algorithm is run in QGIS).
-        # self.addParameter(
-        #     # QgsProcessingParameterFeatureSink(
-        #     QgsProcessingOutputVectorLayer(
-        #         self.OUTPUT,
-        #         self.tr('Output layer')
-        #     )
-        # )
         self.addOutput(QgsProcessingOutputVectorLayer(
             self.OUTPUT,
             self.tr("Output layer"),
             QgsProcessing.TypeVectorAnyGeometry))
-
-        # self.addOutput(QgsProcessingOutputRasterLayer(
-        #     self.OUTPPR,
-        #     self.tr("PPR layer"),
-        #     QgsProcessing.TypeRaster))
 
         self.addOutput(
         QgsProcessingOutputMultipleLayers(
@@ -266,16 +246,13 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         shpLayer = str(abResultsSource) + '.shp'
 
-        # The format is:
-        # vlayer = QgsVectorLayer(data_source, layer_name, provider_name)
-
         source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
 
+        scriptDir = Path(__file__).parent
         qmls = dict()
-        qmls['ppr'] = './QGisStyles/ppr.qml'
-        qmls['pfd'] = './QGisStyles/pfd.qml'
-        qmls['pfv'] = './QGisStyles/pfv.qml'
-
+        qmls['ppr'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
+        qmls['pfd'] = str(scriptDir / 'QGisStyles' / 'pfd.qml')
+        qmls['pfv'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
 
         allRasterLayers = list()
         for index, row in rasterResults.iterrows():
@@ -310,15 +287,6 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
                                               context.project(),
                                               self.OUTPPR))
 
-        # context.addLayerToLoadOnCompletion(
-        #     allRasterLayers[0].id(),
-        #     QgsProcessingContext.LayerDetails('raster layer',
-        #                                       context.project(),
-        #                                       self.OUTPPR))
-
-        # global renamer
-        # renamer = Renamer('DiffBuf')
-
         context.temporaryLayerStore().addMapLayer(source)
         context.addLayerToLoadOnCompletion(
             source.id(),
@@ -339,10 +307,10 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
         # iface.layerTreeView().collapseAllNodes()
 
-        feedback.pushInfo('---------------------------------')
+        feedback.pushInfo('\n---------------------------------')
         feedback.pushInfo('Done, find results and logs here:')
         feedback.pushInfo(str(targetDir.resolve()))
-        feedback.pushInfo('---------------------------------')
+        feedback.pushInfo('---------------------------------\n')
 
 
         return {self.OUTPUT: source, self.OUTPPR: allRasterLayers}
