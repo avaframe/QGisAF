@@ -1,19 +1,13 @@
 # QGisAF
-The QGis to AvaFrame Connector
+The QGis to AvaFrame Connector, providing the necessary files to be loaded in
+QGis. See https://docs.avaframe.org/en/latest/ for more information regarding
+installation and usage.
+
+### License 
+Licensed with [![European Public License EUPL](https://img.shields.io/badge/license-EUPL-green.png)](https://git.avaframe.org/AvaFrame/AvaFrame/src/branch/master/LICENSE.txt)
 
 
-
-On Linux: if avaframe is installed in system, import avaframe just works...
-i.e. Linux and MacOS use the system python
-
-For windows this might be a lead:
-
-https://gis.stackexchange.com/questions/141320/installing-3rd-party-python-libraries-for-qgis-on-windows
-
-https://landscapearchaeology.org/2018/installing-python-packages-in-qgis-3-for-windows/
-
-
-For development: 
+### For development: 
 
 it is possible to install qgis in a conda enviroment:
 conda install qgis --channel conda-forge
