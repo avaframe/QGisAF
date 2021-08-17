@@ -23,6 +23,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterBoolean,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterVectorLayer,
+                       QgsProcessingParameterMultipleLayers,
                        QgsProcessingParameterVectorDestination,
                        QgsProcessingParameterFolderDestination,
                        QgsProcessingParameterRasterDestination,
@@ -91,10 +92,15 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             self.DEM,
             self.tr("DEM layer")))
 
-        self.addParameter(QgsProcessingParameterFeatureSource(
+        # self.addParameter(QgsProcessingParameterFeatureSource(
+        #         self.REL,
+        #         self.tr('Release layer'),
+        #         [QgsProcessing.TypeVectorAnyGeometry]
+        #     ))
+        self.addParameter(QgsProcessingParameterMultipleLayers(
                 self.REL,
-                self.tr('Release layer'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                self.tr('Release layer(s)'),
+                layerType=QgsProcessing.TypeVectorAnyGeometry
             ))
 
         self.addParameter(QgsProcessingParameterFeatureSource(
@@ -163,9 +169,14 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         if sourceDEM is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
 
-        sourceREL = self.parameterAsVectorLayer(parameters, self.REL, context)
-        if sourceREL is None:
+
+        allREL = self.parameterAsLayerList(parameters, self.REL, context)
+        if allREL is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.REL))
+
+        relDict = {}
+        if allREL:
+            relDict = {lyr.source(): lyr for lyr in allREL}
 
         sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
 
@@ -196,15 +207,16 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
             pass
 
         # copy all release shapefile parts
-        sourceRELPath = pathlib.Path(sourceREL.source())
-        targetRELPath = targetDir / 'Inputs' / 'REL'
+        for sourceREL in relDict:
+            sourceRELPath = pathlib.Path(sourceREL)
+            targetRELPath = targetDir / 'Inputs' / 'REL'
 
-        shpParts = self.getSHPParts(sourceRELPath)
-        for shpPart in shpParts:
-            try:
-                shutil.copy(shpPart, targetRELPath)
-            except shutil.SameFileError:
-                pass
+            shpParts = self.getSHPParts(sourceRELPath)
+            for shpPart in shpParts:
+                try:
+                    shutil.copy(shpPart, targetRELPath)
+                except shutil.SameFileError:
+                    pass
 
         # copy all entrainment shapefile parts
         if sourceENT is not None:
