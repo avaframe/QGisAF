@@ -5,7 +5,7 @@ import pathlib
 from pathlib import Path
 pandas.set_option('display.max_colwidth', 10)
 
- # qgis_process run script:avaframeqgis -- DEM=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/slideTopo.asc REL=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/REL/slideRelease.shp PROFILE=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/LINES/slideProfiles_AB.shp
+# qgis_process run script:avaframeqgis -- DEM=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/slideTopo.asc REL=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/REL/slideRelease.shp PROFILE=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/LINES/slideProfiles_AB.shp
 
 
 from qgis.PyQt.QtCore import QCoreApplication
@@ -235,9 +235,16 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
         targetPROFILEPath = targetDir / 'Inputs' / 'LINES'
 
         shpParts = self.getSHPParts(sourcePROFILEPath)
+
         for shpPart in shpParts:
             try:
-                shutil.copy(shpPart, targetPROFILEPath)
+                # make sure this file contains AB (for com2AB)
+                if 'AB' not in str(shpPart):
+                    newName = shpPart.stem + '_AB' + shpPart.suffix
+                    newName = targetPROFILEPath / newName
+                    shutil.copy(shpPart, newName)
+                else:
+                    shutil.copy(shpPart, targetPROFILEPath)
             except shutil.SameFileError:
                 pass
 
@@ -326,9 +333,7 @@ class AvaFrameQGis(QgsProcessingAlgorithm):
 
 
         return {self.OUTPUT: source, self.OUTPPR: allRasterLayers}
-        # return {self.OUTPUT: source, self.OUTPPR: allRasterLayers[0]}
-
-        # return {self.OUTPUT: source}
+        # return {}
 
 
 # Used to develop together with plugin SCRIPT RUNNER
