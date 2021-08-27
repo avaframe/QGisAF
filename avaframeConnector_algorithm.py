@@ -30,34 +30,62 @@ __copyright__ = '(C) 2021 by AvaFrame Team'
 
 __revision__ = '$Format:%H$'
 
+import shutil
+import pandas
+import pathlib
+from pathlib import Path
+pandas.set_option('display.max_colwidth', 10)
+
+# qgis_process run script:avaframeqgis -- DEM=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/slideTopo.asc REL=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/REL/slideRelease.shp PROFILE=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/LINES/slideProfiles_AB.shp
+
+
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
+                       QgsFeatureRequest,
+                       QgsVectorLayer,
+                       QgsProject,
+                       QgsRasterLayer,
+                       QgsProcessingException,
                        QgsProcessingAlgorithm,
+                       QgsProcessingContext,
                        QgsProcessingParameterFeatureSource,
+                       QgsProcessingParameterString,
+                       QgsProcessingParameterBoolean,
+                       QgsProcessingParameterRasterLayer,
+                       QgsProcessingParameterVectorLayer,
+                       QgsProcessingParameterMultipleLayers,
+                       QgsProcessingParameterVectorDestination,
+                       QgsProcessingParameterFolderDestination,
+                       QgsProcessingParameterRasterDestination,
+                       QgsProcessingLayerPostProcessorInterface,
+                       QgsProcessingOutputVectorLayer,
+                       QgsProcessingOutputRasterLayer,
+                       QgsProcessingOutputMultipleLayers,
                        QgsProcessingParameterFeatureSink)
+from qgis import processing
+import avaframe
+from avaframe.in3Utils import initializeProject as iP
+from avaframe import runOperational as runOp
 
 
 class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
     """
-    This is an example algorithm that takes a vector layer and
-    creates a new identical one.
-
-    It is meant to be used as an example of how to create your own
-    algorithms and explain methods and variables used to do it. An
-    algorithm like this will be available in all elements, and there
-    is not need for additional work.
-
-    All Processing algorithms should extend the QgsProcessingAlgorithm
-    class.
+    This is the AvaFrame Connection, i.e. the part running with QGis. For this
+    connector to work, more installation is needed. See instructions at docs.avaframe.org
     """
 
-    # Constants used to refer to parameters and outputs. They will be
-    # used when calling the algorithm from another algorithm, or when
-    # calling from the QGIS console.
-
+    DEM = 'DEM'
+    REL = 'REL'
+    ENT = 'ENT'
+    RES = 'RES'
+    PROFILE = 'PROFILE'
+    SPLITPOINTS = 'SPLITPOINTS'
     OUTPUT = 'OUTPUT'
-    INPUT = 'INPUT'
+    OUTPPR = 'OUTPPR'
+    FOLDEST = 'FOLDEST'
+    SMALLAVA = 'SMALLAVA'
+
 
     def initAlgorithm(self, config):
         """
@@ -65,61 +93,252 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
-        # We add the input vector features source. It can have any kind of
-        # geometry.
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.INPUT,
-                self.tr('Input layer'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+        self.addParameter(QgsProcessingParameterRasterLayer(
+            self.DEM,
+            self.tr("DEM layer")))
+
+        # self.addParameter(QgsProcessingParameterFeatureSource(
+        #         self.REL,
+        #         self.tr('Release layer'),
+        #         [QgsProcessing.TypeVectorAnyGeometry]
+        #     ))
+        self.addParameter(QgsProcessingParameterMultipleLayers(
+                self.REL,
+                self.tr('Release layer(s)'),
+                layerType=QgsProcessing.TypeVectorAnyGeometry
+            ))
+
+        self.addParameter(QgsProcessingParameterFeatureSource(
+            self.PROFILE,
+            self.tr("Profile layer"),
+            [QgsProcessing.TypeVectorLine]))
+
+        self.addParameter(QgsProcessingParameterFeatureSource(
+            self.SPLITPOINTS,
+            self.tr("Splitpoint layer"),
+            # defaultValue = 5,
+            optional=False,
+            types=[QgsProcessing.TypeVectorPoint]))
+
+
+        self.addParameter(QgsProcessingParameterFolderDestination(
+                self.FOLDEST,
+                self.tr('Destination folder')
+            ))
+
+        self.addParameter(QgsProcessingParameterFeatureSource(
+                self.ENT,
+                self.tr('Entrainment layer'),
+                optional=True,
+                types=[QgsProcessing.TypeVectorAnyGeometry]
+            ))
+
+        self.addParameter(QgsProcessingParameterFeatureSource(
+                self.RES,
+                self.tr('Resistance layer'),
+                optional=True,
+                types=[QgsProcessing.TypeVectorAnyGeometry]
+            ))
+
+        self.addParameter(QgsProcessingParameterBoolean(
+                self.SMALLAVA,
+                self.tr('Small Avalanche (for com2AB) '),
+                optional=True
+            ))
+
+        self.addOutput(QgsProcessingOutputVectorLayer(
+            self.OUTPUT,
+            self.tr("Output layer"),
+            QgsProcessing.TypeVectorAnyGeometry))
+
+        self.addOutput(
+        QgsProcessingOutputMultipleLayers(
+                self.OUTPPR,
             )
         )
 
-        # We add a feature sink in which to store our processed features (this
-        # usually takes the form of a newly created vector layer when the
-        # algorithm is run in QGIS).
-        self.addParameter(
-            QgsProcessingParameterFeatureSink(
-                self.OUTPUT,
-                self.tr('Output layer')
-            )
-        )
+    def getSHPParts(self, base):
+        """ Get all files of a shapefile"""
+
+        globBase = base.parent
+        globbed = globBase.glob(base.stem + '.*')
+
+        return globbed
 
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
 
-        # Retrieve the feature source and sink. The 'dest_id' variable is used
-        # to uniquely identify the feature sink, and must be included in the
-        # dictionary returned by the processAlgorithm function.
-        source = self.parameterAsSource(parameters, self.INPUT, context)
-        (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT,
-                context, source.fields(), source.wkbType(), source.sourceCrs())
+        sourceDEM = self.parameterAsRasterLayer(parameters, self.DEM, context)
+        if sourceDEM is None:
+            raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
 
-        # Compute the number of steps to display within the progress bar and
-        # get features from source
-        total = 100.0 / source.featureCount() if source.featureCount() else 0
-        features = source.getFeatures()
 
-        for current, feature in enumerate(features):
-            # Stop the algorithm if cancel button has been clicked
-            if feedback.isCanceled():
-                break
+        allREL = self.parameterAsLayerList(parameters, self.REL, context)
+        if allREL is None:
+            raise QgsProcessingException(self.invalidSourceError(parameters, self.REL))
 
-            # Add a feature in the sink
-            sink.addFeature(feature, QgsFeatureSink.FastInsert)
+        relDict = {}
+        if allREL:
+            relDict = {lyr.source(): lyr for lyr in allREL}
 
-            # Update the progress bar
-            feedback.setProgress(int(current * total))
+        sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
 
-        # Return the results of the algorithm. In this case our only result is
-        # the feature sink which contains the processed features, but some
-        # algorithms may return multiple feature sinks, calculated numeric
-        # statistics, etc. These should all be included in the returned
-        # dictionary, with keys matching the feature corresponding parameter
-        # or output names.
-        return {self.OUTPUT: dest_id}
+        sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
+
+        sourcePROFILE = self.parameterAsVectorLayer(parameters, self.PROFILE, context)
+        # if sourcePROFILE is None:
+        #     raise QgsProcessingException(self.invalidSourceError(parameters, self.PROFILE))
+
+        sourceSPLITPOINTS= self.parameterAsVectorLayer(parameters, self.SPLITPOINTS, context)
+        # if sourceSPLITPOINTS is None:
+        #     raise QgsProcessingException(self.invalidSourceError(parameters, self.SPLITPOINTS))
+
+        # create folder structure
+        # TODO: make sure directory is empty
+        # targetDir = pathlib.Path('.') / 'TestDir'
+        targetDir = pathlib.Path(sourceFOLDEST)
+        iP.initializeFolderStruct(targetDir, removeExisting=True)
+
+        feedback.pushInfo(sourceDEM.source())
+
+        # copy DEM
+        sourceDEMPath = pathlib.Path(sourceDEM.source())
+        targetDEMPath = targetDir / 'Inputs'
+        try:
+            shutil.copy(sourceDEMPath, targetDEMPath)
+        except shutil.SameFileError:
+            pass
+
+        # copy all release shapefile parts
+        for sourceREL in relDict:
+            sourceRELPath = pathlib.Path(sourceREL)
+            targetRELPath = targetDir / 'Inputs' / 'REL'
+
+            shpParts = self.getSHPParts(sourceRELPath)
+            for shpPart in shpParts:
+                try:
+                    shutil.copy(shpPart, targetRELPath)
+                except shutil.SameFileError:
+                    pass
+
+        # copy all entrainment shapefile parts
+        if sourceENT is not None:
+            sourceENTPath = pathlib.Path(sourceENT.source())
+            targetENTPath = targetDir / 'Inputs' / 'ENT'
+
+            shpParts = self.getSHPParts(sourceENTPath)
+            for shpPart in shpParts:
+                try:
+                    shutil.copy(shpPart, targetENTPath)
+                except shutil.SameFileError:
+                    pass
+
+        # copy all Profile shapefile parts
+        sourcePROFILEPath = pathlib.Path(sourcePROFILE.source())
+        targetPROFILEPath = targetDir / 'Inputs' / 'LINES'
+
+        shpParts = self.getSHPParts(sourcePROFILEPath)
+
+        for shpPart in shpParts:
+            try:
+                # make sure this file contains AB (for com2AB)
+                if 'AB' not in str(shpPart):
+                    newName = shpPart.stem + '_AB' + shpPart.suffix
+                    newName = targetPROFILEPath / newName
+                    shutil.copy(shpPart, newName)
+                else:
+                    shutil.copy(shpPart, targetPROFILEPath)
+            except shutil.SameFileError:
+                pass
+
+        # copy all Splitpoint shapefile parts
+        sourceSPLITPOINTSPath = pathlib.Path(sourceSPLITPOINTS.source())
+        targetSPLITPOINTSPath = targetDir / 'Inputs' / 'POINTS'
+
+        shpParts = self.getSHPParts(sourceSPLITPOINTSPath)
+        for shpPart in shpParts:
+            try:
+                shutil.copy(shpPart, targetSPLITPOINTSPath)
+            except shutil.SameFileError:
+                pass
+
+        feedback.pushInfo('Starting the simulations')
+
+        abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
+
+        shpLayer = str(abResultsSource) + '.shp'
+
+        source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
+
+        scriptDir = Path(__file__).parent
+        qmls = dict()
+        qmls['ppr'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
+        qmls['pfd'] = str(scriptDir / 'QGisStyles' / 'pfd.qml')
+        qmls['pfv'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
+
+        allRasterLayers = list()
+        for index, row in rasterResults.iterrows():
+            print(row["files"], row["resType"])
+            rstLayer = QgsRasterLayer(str(row['files']), row['names'])
+            rstLayer.loadNamedStyle(qmls[row['resType']])
+
+            allRasterLayers.append(rstLayer)
+
+        # should work, but doesn't...
+        # rstLayer.setName('ThisIsDaStuff')
+
+
+        # # Add SamosAT Group
+        # Root = QgsProject.instance().layerTreeRoot()
+
+        # # See if SamosAT group exists
+        # # if not, create
+        # SatGroup = Root.findGroup("com1DFA")
+        # if SatGroup:
+        #     feedback.pushDebugInfo('Found')
+        # else:
+        #     feedback.pushDebugInfo('Not Found')
+        #     SatGroup = Root.insertGroup(0, "com1DFA")
+
+        context.temporaryLayerStore().addMapLayers(allRasterLayers)
+
+        for item in allRasterLayers:
+            context.addLayerToLoadOnCompletion(
+                item.id(),
+                QgsProcessingContext.LayerDetails('raster layer',
+                                              context.project(),
+                                              self.OUTPPR))
+
+        context.temporaryLayerStore().addMapLayer(source)
+        context.addLayerToLoadOnCompletion(
+            source.id(),
+            QgsProcessingContext.LayerDetails('OGR layer',
+                                              context.project(),
+                                              self.OUTPUT))
+
+        # context.temporaryLayerStore().addMapLayer(rstLayer)
+        # context.addLayerToLoadOnCompletion(
+        #     rstLayer.id(),
+        #     QgsProcessingContext.LayerDetails('raster layer',
+        #                                       context.project(),
+        #                                       self.OUTPPR))
+
+        # context.layerToLoadOnCompletionDetails(rstLayer.id()).setPostProcessor(renamer)
+
+        # self.ImportDFA(sourceDIR, Sim, SatGroup)
+
+        # iface.layerTreeView().collapseAllNodes()
+
+        feedback.pushInfo('\n---------------------------------')
+        feedback.pushInfo('Done, find results and logs here:')
+        feedback.pushInfo(str(targetDir.resolve()))
+        feedback.pushInfo('---------------------------------\n')
+
+
+        return {self.OUTPUT: source, self.OUTPPR: allRasterLayers}
+        # return {}
 
     def name(self):
         """
