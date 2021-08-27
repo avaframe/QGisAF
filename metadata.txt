@@ -6,11 +6,11 @@
 name=AvaFrameConnector
 qgisMinimumVersion=3.0
 description=Connects to AvaFrame
-version=0.1
+version=0.9
 author=AvaFrame Team
 email=felix@avaframe.org
 
-about=Dis be da about
+about=Connecting AvaFrame and QGis
 
 tracker=https://github.com/avaframe/QGisAF
 repository=https://github.com/avaframe/QGisAF
@@ -25,8 +25,8 @@ hasProcessingProvider=yes
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=http://homepage
-category=Analysis
+homepage=http://avaframe.org
+category=Modelling
 icon=icon.png
 # experimental flag
 experimental=True
