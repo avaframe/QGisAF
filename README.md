@@ -11,3 +11,11 @@ Licensed with [![European Public License EUPL](https://img.shields.io/badge/lice
 
 it is possible to install qgis in a conda enviroment:
 conda install qgis --channel conda-forge
+
+### To deploy
+
+- change version info in `metadata.txt`
+
+- use `pb_tool zip` to generate uploadable zip
+
+- Upload to https://plugins.qgis.org
