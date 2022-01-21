@@ -184,7 +184,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             relDict = {lyr.source(): lyr for lyr in allREL}
 
         sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
-        
+
         sourceRES = self.parameterAsVectorLayer(parameters, self.RES, context)
 
         sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
@@ -236,7 +236,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                     shutil.copy(shpPart, targetENTPath)
                 except shutil.SameFileError:
                     pass
-        
+
         # copy all resistance shapefile parts
         if sourceRES is not None:
             sourceRESPath = pathlib.Path(sourceRES.source())
