@@ -6,7 +6,7 @@
 name=AvaFrameConnector
 qgisMinimumVersion=3.0
 description=Connects to AvaFrame
-version=0.9.2
+version=0.9.3
 author=AvaFrame Team
 email=felix@avaframe.org
 
@@ -20,7 +20,7 @@ repository=https://github.com/avaframe/QGisAF
 
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
-changelog=
+changelog= 0.9.3 Fix missing resistance and remove smallavalanche
 
 # Tags are comma separated with spaces allowed
 tags=python, avalanche
