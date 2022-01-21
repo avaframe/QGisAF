@@ -23,8 +23,8 @@
 """
 
 __author__ = 'AvaFrame Team'
-__date__ = '2021-08-26'
-__copyright__ = '(C) 2021 by AvaFrame Team'
+__date__ = '2022'
+__copyright__ = '(C) 2022 by AvaFrame Team'
 
 # This will get replaced with a git SHA1 when you do a git archive
 
@@ -140,11 +140,11 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                 types=[QgsProcessing.TypeVectorAnyGeometry]
             ))
 
-        self.addParameter(QgsProcessingParameterBoolean(
-                self.SMALLAVA,
-                self.tr('Small Avalanche (for com2AB) '),
-                optional=True
-            ))
+        #  self.addParameter(QgsProcessingParameterBoolean(
+        #          self.SMALLAVA,
+        #          self.tr('Small Avalanche (for com2AB) '),
+        #          optional=True
+        #      ))
 
         self.addOutput(QgsProcessingOutputVectorLayer(
             self.OUTPUT,
@@ -184,6 +184,8 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             relDict = {lyr.source(): lyr for lyr in allREL}
 
         sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
+        
+        sourceRES = self.parameterAsVectorLayer(parameters, self.RES, context)
 
         sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
 
@@ -232,6 +234,18 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             for shpPart in shpParts:
                 try:
                     shutil.copy(shpPart, targetENTPath)
+                except shutil.SameFileError:
+                    pass
+        
+        # copy all resistance shapefile parts
+        if sourceRES is not None:
+            sourceRESPath = pathlib.Path(sourceRES.source())
+            targetRESPath = targetDir / 'Inputs' / 'RES'
+
+            shpParts = self.getSHPParts(sourceRESPath)
+            for shpPart in shpParts:
+                try:
+                    shutil.copy(shpPart, targetRESPath)
                 except shutil.SameFileError:
                     pass
 
