@@ -36,7 +36,7 @@ import pathlib
 from pathlib import Path
 pandas.set_option('display.max_colwidth', 10)
 
-# qgis_process run script:avaframeqgis -- DEM=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/slideTopo.asc REL=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/REL/slideRelease.shp PROFILE=/home/felix/Versioning/AvaFrame/avaframe/data/avaSlide/Inputs/LINES/slideProfiles_AB.shp
+#qgis_process run AVAFRAME:AvaFrameConnector -- DEM=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/avaAlr.asc ENT FOLDEST=/home/felix/tmp/Out1 PROFILE=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/LINES/pathAB.shp REL=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/REL/relAlr12.shp RES= SPLITPOINTS=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/POINTS/splitPoint.sh
 
 
 from qgis.PyQt.QtCore import QCoreApplication
@@ -97,11 +97,11 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             self.DEM,
             self.tr("DEM layer")))
 
-        # self.addParameter(QgsProcessingParameterFeatureSource(
-        #         self.REL,
-        #         self.tr('Release layer'),
-        #         [QgsProcessing.TypeVectorAnyGeometry]
-        #     ))
+        #  self.addParameter(QgsProcessingParameterFeatureSource(
+               #  self.REL,
+               #  self.tr('Release layer'),
+               #  [QgsProcessing.TypeVectorAnyGeometry]
+           #  ))
         self.addParameter(QgsProcessingParameterMultipleLayers(
                 self.REL,
                 self.tr('Release layer(s)'),
@@ -140,12 +140,12 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                 types=[QgsProcessing.TypeVectorAnyGeometry]
             ))
 
-        #  self.addParameter(QgsProcessingParameterBoolean(
-        #          self.SMALLAVA,
-        #          self.tr('Small Avalanche (for com2AB) '),
-        #          optional=True
-        #      ))
-
+#          self.addParameter(QgsProcessingParameterBoolean(
+#                  self.SMALLAVA,
+#                  self.tr('Small Avalanche (for com2AB) '),
+#                  optional=True
+#              ))
+#  #
         self.addOutput(QgsProcessingOutputVectorLayer(
             self.OUTPUT,
             self.tr("Output layer"),
@@ -156,7 +156,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                 self.OUTPPR,
             )
         )
-
+#
     def getSHPParts(self, base):
         """ Get all files of a shapefile"""
 
@@ -174,7 +174,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         if sourceDEM is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
 
-
+#
         allREL = self.parameterAsLayerList(parameters, self.REL, context)
         if allREL is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.REL))
@@ -344,7 +344,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         # self.ImportDFA(sourceDIR, Sim, SatGroup)
 
         # iface.layerTreeView().collapseAllNodes()
-
+#
         feedback.pushInfo('\n---------------------------------')
         feedback.pushInfo('Done, find results and logs here:')
         feedback.pushInfo(str(targetDir.resolve()))
@@ -352,7 +352,6 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
 
 
         return {self.OUTPUT: source, self.OUTPPR: allRasterLayers}
-        # return {}
 
     def name(self):
         """
@@ -386,7 +385,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return ''
+        return 'Operational'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
