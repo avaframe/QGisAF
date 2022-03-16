@@ -111,13 +111,15 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterFeatureSource(
             self.PROFILE,
             self.tr("Profile layer"),
-            [QgsProcessing.TypeVectorLine]))
+            optional=True,
+            defaultValue = "",
+            types=[QgsProcessing.TypeVectorLine]))
 
         self.addParameter(QgsProcessingParameterFeatureSource(
             self.SPLITPOINTS,
             self.tr("Splitpoint layer"),
-            # defaultValue = 5,
-            optional=False,
+            defaultValue = "",
+            optional=True,
             types=[QgsProcessing.TypeVectorPoint]))
 
 
@@ -130,6 +132,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                 self.ENT,
                 self.tr('Entrainment layer'),
                 optional=True,
+                defaultValue = "",
                 types=[QgsProcessing.TypeVectorAnyGeometry]
             ))
 
@@ -137,6 +140,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                 self.RES,
                 self.tr('Resistance layer'),
                 optional=True,
+                defaultValue = "",
                 types=[QgsProcessing.TypeVectorAnyGeometry]
             ))
 
@@ -190,12 +194,8 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
 
         sourcePROFILE = self.parameterAsVectorLayer(parameters, self.PROFILE, context)
-        # if sourcePROFILE is None:
-        #     raise QgsProcessingException(self.invalidSourceError(parameters, self.PROFILE))
 
         sourceSPLITPOINTS= self.parameterAsVectorLayer(parameters, self.SPLITPOINTS, context)
-        # if sourceSPLITPOINTS is None:
-        #     raise QgsProcessingException(self.invalidSourceError(parameters, self.SPLITPOINTS))
 
         # create folder structure
         # TODO: make sure directory is empty
@@ -250,41 +250,51 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                     pass
 
         # copy all Profile shapefile parts
-        sourcePROFILEPath = pathlib.Path(sourcePROFILE.source())
-        targetPROFILEPath = targetDir / 'Inputs' / 'LINES'
+        if sourcePROFILE is not None:
+            sourcePROFILEPath = pathlib.Path(sourcePROFILE.source())
+            targetPROFILEPath = targetDir / 'Inputs' / 'LINES'
 
-        shpParts = self.getSHPParts(sourcePROFILEPath)
+            shpParts = self.getSHPParts(sourcePROFILEPath)
 
-        for shpPart in shpParts:
-            try:
-                # make sure this file contains AB (for com2AB)
-                if 'AB' not in str(shpPart):
-                    newName = shpPart.stem + '_AB' + shpPart.suffix
-                    newName = targetPROFILEPath / newName
-                    shutil.copy(shpPart, newName)
-                else:
-                    shutil.copy(shpPart, targetPROFILEPath)
-            except shutil.SameFileError:
-                pass
+            for shpPart in shpParts:
+                try:
+                    # make sure this file contains AB (for com2AB)
+                    if 'AB' not in str(shpPart):
+                        newName = shpPart.stem + '_AB' + shpPart.suffix
+                        newName = targetPROFILEPath / newName
+                        shutil.copy(shpPart, newName)
+                    else:
+                        shutil.copy(shpPart, targetPROFILEPath)
+                except shutil.SameFileError:
+                    pass
 
         # copy all Splitpoint shapefile parts
-        sourceSPLITPOINTSPath = pathlib.Path(sourceSPLITPOINTS.source())
-        targetSPLITPOINTSPath = targetDir / 'Inputs' / 'POINTS'
+        if sourceSPLITPOINTS is not None:
+            sourceSPLITPOINTSPath = pathlib.Path(sourceSPLITPOINTS.source())
+            targetSPLITPOINTSPath = targetDir / 'Inputs' / 'POINTS'
 
-        shpParts = self.getSHPParts(sourceSPLITPOINTSPath)
-        for shpPart in shpParts:
-            try:
-                shutil.copy(shpPart, targetSPLITPOINTSPath)
-            except shutil.SameFileError:
-                pass
+            shpParts = self.getSHPParts(sourceSPLITPOINTSPath)
+            for shpPart in shpParts:
+                try:
+                    shutil.copy(shpPart, targetSPLITPOINTSPath)
+                except shutil.SameFileError:
+                    pass
 
         feedback.pushInfo('Starting the simulations')
 
         abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
 
-        shpLayer = str(abResultsSource) + '.shp'
+        feedback.pushInfo('Done, start loading the results')
+        
+        if abResultsSource == 'None':
+            source = None
+            feedback.pushInfo('Alpha Beta was not run')
+        else:
+            feedback.pushInfo('Found ab source')
+            shpLayer = str(abResultsSource) + '.shp'
 
-        source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
+            source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
+
 
         scriptDir = Path(__file__).parent
         qmls = dict()
@@ -325,12 +335,13 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                                               context.project(),
                                               self.OUTPPR))
 
-        context.temporaryLayerStore().addMapLayer(source)
-        context.addLayerToLoadOnCompletion(
-            source.id(),
-            QgsProcessingContext.LayerDetails('OGR layer',
-                                              context.project(),
-                                              self.OUTPUT))
+        if source is not None:
+            context.temporaryLayerStore().addMapLayer(source)
+            context.addLayerToLoadOnCompletion(
+                source.id(),
+                QgsProcessingContext.LayerDetails('OGR layer',
+                                                  context.project(),
+                                                  self.OUTPUT))
 
         # context.temporaryLayerStore().addMapLayer(rstLayer)
         # context.addLayerToLoadOnCompletion(
@@ -351,7 +362,10 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo('---------------------------------\n')
 
 
-        return {self.OUTPUT: source, self.OUTPPR: allRasterLayers}
+        if source is None:
+            return {self.OUTPPR: allRasterLayers}
+        else:
+            return {self.OUTPUT: source, self.OUTPPR: allRasterLayers}
 
     def name(self):
         """
