@@ -67,6 +67,7 @@ from qgis import processing
 import avaframe
 from avaframe.in3Utils import initializeProject as iP
 from avaframe import runOperational as runOp
+import avaframe.version as gv
 
 
 class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
@@ -174,6 +175,8 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
 
+        feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
+
         sourceDEM = self.parameterAsRasterLayer(parameters, self.DEM, context)
         if sourceDEM is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
@@ -280,7 +283,10 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                 except shutil.SameFileError:
                     pass
 
+
         feedback.pushInfo('Starting the simulations')
+        feedback.pushInfo('This might take a while')
+        feedback.pushInfo('Open Plugins -> Python Console to see the progress')
 
         abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
 
