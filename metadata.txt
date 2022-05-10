@@ -6,7 +6,7 @@
 name=AvaFrameConnector
 qgisMinimumVersion=3.0
 description=Connects to AvaFrame
-version=0.9.3
+version=1.0
 author=AvaFrame Team
 email=felix@avaframe.org
 
