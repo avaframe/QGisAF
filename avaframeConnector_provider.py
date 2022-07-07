@@ -32,6 +32,7 @@ __revision__ = '$Format:%H$'
 
 from qgis.core import QgsProcessingProvider
 from .avaframeConnector_algorithm import AvaFrameConnectorAlgorithm
+from .avaframeLayerRename_algorithm import AvaFrameLayerRenameAlgorithm
 import os
 import inspect
 from qgis.PyQt.QtGui import QIcon
@@ -57,8 +58,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         Loads all algorithms belonging to this provider.
         """
         self.addAlgorithm(AvaFrameConnectorAlgorithm())
-        # add additional algorithms here
-        # self.addAlgorithm(MyOtherAlgorithm())
+        self.addAlgorithm(AvaFrameLayerRenameAlgorithm())
 
     def id(self):
         """
