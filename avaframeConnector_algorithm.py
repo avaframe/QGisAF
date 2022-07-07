@@ -78,6 +78,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
 
     DEM = 'DEM'
     REL = 'REL'
+    SECREL = 'SECREL'
     ENT = 'ENT'
     RES = 'RES'
     PROFILE = 'PROFILE'
@@ -104,9 +105,17 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                #  [QgsProcessing.TypeVectorAnyGeometry]
            #  ))
         self.addParameter(QgsProcessingParameterMultipleLayers(
-                self.REL,
-                self.tr('Release layer(s)'),
-                layerType=QgsProcessing.TypeVectorAnyGeometry
+            self.REL,
+            self.tr('Release layer(s)'),
+            layerType=QgsProcessing.TypeVectorAnyGeometry
+            ))
+        
+        self.addParameter(QgsProcessingParameterMultipleLayers(
+            self.SECREL,
+            self.tr('Secondary release layer(s)'),
+            optional=True,
+            defaultValue = "",
+            layerType=QgsProcessing.TypeVectorAnyGeometry
             ))
 
         self.addParameter(QgsProcessingParameterFeatureSource(
@@ -181,7 +190,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         if sourceDEM is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
 
-#
+        # Release files
         allREL = self.parameterAsLayerList(parameters, self.REL, context)
         if allREL is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.REL))
@@ -189,6 +198,14 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         relDict = {}
         if allREL:
             relDict = {lyr.source(): lyr for lyr in allREL}
+
+        # Secondary release files
+        allSecREL = self.parameterAsLayerList(parameters, self.SECREL, context)
+
+        secRelDict = {}
+        if allSecREL:
+            secRelDict = {lyr.source(): lyr for lyr in allSecREL}
+
 
         sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
 
@@ -201,10 +218,8 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         sourceSPLITPOINTS= self.parameterAsVectorLayer(parameters, self.SPLITPOINTS, context)
 
         # create folder structure
-        # TODO: make sure directory is empty
-        # targetDir = pathlib.Path('.') / 'TestDir'
         targetDir = pathlib.Path(sourceFOLDEST)
-        iP.initializeFolderStruct(targetDir, removeExisting=True)
+        iP.initializeFolderStruct(targetDir, removeExisting=False)
 
         feedback.pushInfo(sourceDEM.source())
 
@@ -225,6 +240,18 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             for shpPart in shpParts:
                 try:
                     shutil.copy(shpPart, targetRELPath)
+                except shutil.SameFileError:
+                    pass
+        
+        # copy all secondary release shapefile parts
+        for sourceSECREL in secRelDict:
+            sourceSECRELPath = pathlib.Path(sourceSECREL)
+            targetSECRELPath = targetDir / 'Inputs' / 'SECREL'
+
+            shpParts = self.getSHPParts(sourceSECRELPath)
+            for shpPart in shpParts:
+                try:
+                    shutil.copy(shpPart, targetSECRELPath)
                 except shutil.SameFileError:
                     pass
 
@@ -356,19 +383,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                                                   context.project(),
                                                   self.OUTPUT))
 
-        # context.temporaryLayerStore().addMapLayer(rstLayer)
-        # context.addLayerToLoadOnCompletion(
-        #     rstLayer.id(),
-        #     QgsProcessingContext.LayerDetails('raster layer',
-        #                                       context.project(),
-        #                                       self.OUTPPR))
 
-        # context.layerToLoadOnCompletionDetails(rstLayer.id()).setPostProcessor(renamer)
-
-        # self.ImportDFA(sourceDIR, Sim, SatGroup)
-
-        # iface.layerTreeView().collapseAllNodes()
-#
         feedback.pushInfo('\n---------------------------------')
         feedback.pushInfo('Done, find results and logs here:')
         feedback.pushInfo(str(targetDir.resolve()))
