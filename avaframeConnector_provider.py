@@ -33,6 +33,8 @@ __revision__ = '$Format:%H$'
 from qgis.core import QgsProcessingProvider
 from .avaframeConnector_algorithm import AvaFrameConnectorAlgorithm
 from .avaframeLayerRename_algorithm import AvaFrameLayerRenameAlgorithm
+from .avaframeGetVersion_algorithm import AvaFrameGetVersionAlgorithm
+from .avaframeRunCom1DFA_algorithm import AvaFrameRunCom1DFAAlgorithm
 import os
 import inspect
 from qgis.PyQt.QtGui import QIcon
@@ -59,6 +61,8 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         """
         self.addAlgorithm(AvaFrameConnectorAlgorithm())
         self.addAlgorithm(AvaFrameLayerRenameAlgorithm())
+        self.addAlgorithm(AvaFrameGetVersionAlgorithm())
+        self.addAlgorithm(AvaFrameRunCom1DFAAlgorithm())
 
     def id(self):
         """
