@@ -35,14 +35,13 @@ from qgis.core import (
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterString,
 )
-import avaframe.version as gv
 
 
 class AvaFrameGetVersionAlgorithm(QgsProcessingAlgorithm):
     """
     Rename avaframe layers by adding choosen parameters and their values
     """
-    
+
     INPUT = 'INPUT'
 
     def initAlgorithm(self, config):
@@ -55,20 +54,21 @@ class AvaFrameGetVersionAlgorithm(QgsProcessingAlgorithm):
                 self.INPUT,
                 self.tr('Dummy input'),
                 optional=True,
-                defaultValue = "No need to add anything"
+                defaultValue="No need to add anything"
             ))
 
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
+        import avaframe.version as gv
+
         feedback.pushInfo('---------------')
         feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
         feedback.pushInfo('---------------')
         feedback.pushInfo('')
 
         return {}
-
 
     def name(self):
         """
@@ -102,17 +102,18 @@ class AvaFrameGetVersionAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Operational'
+        return 'Admin'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self) -> str:
         hstring = 'Returns the version of AvaFrame. \n\
-                The input is purely a dummy input, needed for this window to show up. \n\
+                The input is purely a dummy input, needed for this \
+                window to show up. \n\
                 No need to add anything.'
 
-        return self.tr(hstring) 
+        return self.tr(hstring)
 
     def createInstance(self):
         return AvaFrameGetVersionAlgorithm()

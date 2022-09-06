@@ -64,10 +64,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingOutputMultipleLayers,
                        QgsProcessingParameterFeatureSink)
 from qgis import processing
-import avaframe
-from avaframe.in3Utils import initializeProject as iP
-from avaframe import runOperational as runOp
-import avaframe.version as gv
+
 
 
 class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
@@ -171,18 +168,17 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             )
         )
 #
-    def getSHPParts(self, base):
-        """ Get all files of a shapefile"""
 
-        globBase = base.parent
-        globbed = globBase.glob(base.stem + '.*')
-
-        return globbed
 
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
+
+        from avaframe.in3Utils import initializeProject as iP
+        from avaframe import runOperational as runOp
+        import avaframe.version as gv
+        from . import avaframeConnector_commonFunc as cF 
 
         feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
 
@@ -224,67 +220,32 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo(sourceDEM.source())
 
         # copy DEM
-        sourceDEMPath = pathlib.Path(sourceDEM.source())
-        targetDEMPath = targetDir / 'Inputs'
-        try:
-            shutil.copy(sourceDEMPath, targetDEMPath)
-        except shutil.SameFileError:
-            pass
+        cF.copyDEM(sourceDEM, targetDir)
 
         # copy all release shapefile parts
-        for sourceREL in relDict:
-            sourceRELPath = pathlib.Path(sourceREL)
-            targetRELPath = targetDir / 'Inputs' / 'REL'
-
-            shpParts = self.getSHPParts(sourceRELPath)
-            for shpPart in shpParts:
-                try:
-                    shutil.copy(shpPart, targetRELPath)
-                except shutil.SameFileError:
-                    pass
-        
+        cF.copyMultipleShp(relDict, targetDir / 'Inputs' / 'REL')
+       
         # copy all secondary release shapefile parts
-        for sourceSECREL in secRelDict:
-            sourceSECRELPath = pathlib.Path(sourceSECREL)
-            targetSECRELPath = targetDir / 'Inputs' / 'SECREL'
-
-            shpParts = self.getSHPParts(sourceSECRELPath)
-            for shpPart in shpParts:
-                try:
-                    shutil.copy(shpPart, targetSECRELPath)
-                except shutil.SameFileError:
-                    pass
+        cF.copyMultipleShp(secRelDict, targetDir / 'Inputs' / 'SECREL')
 
         # copy all entrainment shapefile parts
         if sourceENT is not None:
-            sourceENTPath = pathlib.Path(sourceENT.source())
-            targetENTPath = targetDir / 'Inputs' / 'ENT'
-
-            shpParts = self.getSHPParts(sourceENTPath)
-            for shpPart in shpParts:
-                try:
-                    shutil.copy(shpPart, targetENTPath)
-                except shutil.SameFileError:
-                    pass
+            cF.copyShp(sourceENT.source(), targetDir / 'Inputs' / 'ENT')
 
         # copy all resistance shapefile parts
         if sourceRES is not None:
-            sourceRESPath = pathlib.Path(sourceRES.source())
-            targetRESPath = targetDir / 'Inputs' / 'RES'
-
-            shpParts = self.getSHPParts(sourceRESPath)
-            for shpPart in shpParts:
-                try:
-                    shutil.copy(shpPart, targetRESPath)
-                except shutil.SameFileError:
-                    pass
+            cF.copyShp(sourceRES.source(), targetDir / 'Inputs' / 'RES')
+        
+        # copy all Splitpoint shapefile parts
+        if sourceSPLITPOINTS is not None:
+            cF.copyShp(sourceSPLITPOINTS.source(), targetDir / 'Inputs' / 'POINTS')
 
         # copy all Profile shapefile parts
         if sourcePROFILE is not None:
             sourcePROFILEPath = pathlib.Path(sourcePROFILE.source())
             targetPROFILEPath = targetDir / 'Inputs' / 'LINES'
 
-            shpParts = self.getSHPParts(sourcePROFILEPath)
+            shpParts = cF.getSHPParts(sourcePROFILEPath)
 
             for shpPart in shpParts:
                 try:
@@ -297,19 +258,6 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                         shutil.copy(shpPart, targetPROFILEPath)
                 except shutil.SameFileError:
                     pass
-
-        # copy all Splitpoint shapefile parts
-        if sourceSPLITPOINTS is not None:
-            sourceSPLITPOINTSPath = pathlib.Path(sourceSPLITPOINTS.source())
-            targetSPLITPOINTSPath = targetDir / 'Inputs' / 'POINTS'
-
-            shpParts = self.getSHPParts(sourceSPLITPOINTSPath)
-            for shpPart in shpParts:
-                try:
-                    shutil.copy(shpPart, targetSPLITPOINTSPath)
-                except shutil.SameFileError:
-                    pass
-
 
         feedback.pushInfo('Starting the simulations')
         feedback.pushInfo('This might take a while')
