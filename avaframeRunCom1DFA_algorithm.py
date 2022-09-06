@@ -30,7 +30,7 @@ __copyright__ = '(C) 2022 by AvaFrame Team'
 
 __revision__ = '$Format:%H$'
 
-import shutil
+
 import pandas
 import pathlib
 from pathlib import Path
@@ -54,9 +54,6 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingOutputMultipleLayers)
 
 from qgis import processing
-from avaframe.in3Utils import initializeProject as iP
-from avaframe import runOperational as runOp
-import avaframe.version as gv
 
 
 class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
@@ -121,22 +118,14 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
                 self.tr('Destination folder')
             ))
 
-   #          self.addParameter(QgsProcessingParameterBoolean(
-#                  self.SMALLAVA,
-#                  self.tr('Small Avalanche (for com2AB) '),
-#                  optional=True
-#              ))
-#  #
         self.addOutput(QgsProcessingOutputVectorLayer(
             self.OUTPUT,
             self.tr("Output layer"),
             QgsProcessing.TypeVectorAnyGeometry))
 
-        self.addOutput(
-        QgsProcessingOutputMultipleLayers(
+        self.addOutput( QgsProcessingOutputMultipleLayers(
                 self.OUTPPR,
-            )
-        )
+            ))
 
     def flags(self):
         return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
@@ -153,6 +142,11 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+
+        from avaframe.in3Utils import initializeProject as iP
+        from avaframe import runOperational as runOp
+        import avaframe.version as gv
+        from . import avaframeConnector_commonFunc as cF 
 
         feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
 
@@ -190,62 +184,23 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo(sourceDEM.source())
 
+
         # copy DEM
-        sourceDEMPath = pathlib.Path(sourceDEM.source())
-        targetDEMPath = targetDir / 'Inputs'
-        try:
-            shutil.copy(sourceDEMPath, targetDEMPath)
-        except shutil.SameFileError:
-            pass
+        cF.copyDEM(sourceDEM, targetDir)
 
         # copy all release shapefile parts
-        for sourceREL in relDict:
-            sourceRELPath = pathlib.Path(sourceREL)
-            targetRELPath = targetDir / 'Inputs' / 'REL'
-
-            shpParts = self.getSHPParts(sourceRELPath)
-            for shpPart in shpParts:
-                try:
-                    shutil.copy(shpPart, targetRELPath)
-                except shutil.SameFileError:
-                    pass
-        
+        cF.copyMultipleShp(relDict, targetDir / 'Inputs' / 'REL')
+       
         # copy all secondary release shapefile parts
-        for sourceSECREL in secRelDict:
-            sourceSECRELPath = pathlib.Path(sourceSECREL)
-            targetSECRELPath = targetDir / 'Inputs' / 'SECREL'
-
-            shpParts = self.getSHPParts(sourceSECRELPath)
-            for shpPart in shpParts:
-                try:
-                    shutil.copy(shpPart, targetSECRELPath)
-                except shutil.SameFileError:
-                    pass
+        cF.copyMultipleShp(secRelDict, targetDir / 'Inputs' / 'SECREL')
 
         # copy all entrainment shapefile parts
         if sourceENT is not None:
-            sourceENTPath = pathlib.Path(sourceENT.source())
-            targetENTPath = targetDir / 'Inputs' / 'ENT'
-
-            shpParts = self.getSHPParts(sourceENTPath)
-            for shpPart in shpParts:
-                try:
-                    shutil.copy(shpPart, targetENTPath)
-                except shutil.SameFileError:
-                    pass
+            cF.copyShp(sourceENT.source(), targetDir / 'Inputs' / 'ENT')
 
         # copy all resistance shapefile parts
         if sourceRES is not None:
-            sourceRESPath = pathlib.Path(sourceRES.source())
-            targetRESPath = targetDir / 'Inputs' / 'RES'
-
-            shpParts = self.getSHPParts(sourceRESPath)
-            for shpPart in shpParts:
-                try:
-                    shutil.copy(shpPart, targetRESPath)
-                except shutil.SameFileError:
-                    pass
-
+            cF.copyShp(sourceRES.source(), targetDir / 'Inputs' / 'RES')
 
         feedback.pushInfo('Starting the simulations')
         feedback.pushInfo('This might take a while')
@@ -254,16 +209,6 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
 
         feedback.pushInfo('Done, start loading the results')
-        
-        if abResultsSource == 'None':
-            source = None
-            feedback.pushInfo('Alpha Beta was not run')
-        else:
-            feedback.pushInfo('Found ab source')
-            shpLayer = str(abResultsSource) + '.shp'
-
-            source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
-
 
         scriptDir = Path(__file__).parent
         qmls = dict()

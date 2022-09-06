@@ -44,9 +44,6 @@ from qgis.core import (
                        QgsProcessingParameterMultipleLayers,
 )
 from qgis import processing
-import avaframe
-import avaframe.version as gv
-from avaframe.in3Utils import cfgHandling
 
 
 class AvaFrameLayerRenameAlgorithm(QgsProcessingAlgorithm):
@@ -81,6 +78,9 @@ class AvaFrameLayerRenameAlgorithm(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+
+        import avaframe.version as gv
+        from avaframe.in3Utils import cfgHandling
 
         feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
 
