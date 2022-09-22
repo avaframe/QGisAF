@@ -256,25 +256,12 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
                                               context.project(),
                                               self.OUTPPR))
 
-        if source is not None:
-            context.temporaryLayerStore().addMapLayer(source)
-            context.addLayerToLoadOnCompletion(
-                source.id(),
-                QgsProcessingContext.LayerDetails('OGR layer',
-                                                  context.project(),
-                                                  self.OUTPUT))
-
-
         feedback.pushInfo('\n---------------------------------')
         feedback.pushInfo('Done, find results and logs here:')
         feedback.pushInfo(str(targetDir.resolve()))
         feedback.pushInfo('---------------------------------\n')
 
-
-        if source is None:
-            return {self.OUTPPR: allRasterLayers}
-        else:
-            return {self.OUTPUT: source, self.OUTPPR: allRasterLayers}
+        return {self.OUTPPR: allRasterLayers}
 
     def name(self):
         """
