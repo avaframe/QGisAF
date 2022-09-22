@@ -92,6 +92,7 @@ from .avaframeConnector_algorithm import AvaFrameConnectorAlgorithm
 from .avaframeLayerRename_algorithm import AvaFrameLayerRenameAlgorithm
 from .avaframeGetVersion_algorithm import AvaFrameGetVersionAlgorithm
 from .avaframeRunCom1DFA_algorithm import AvaFrameRunCom1DFAAlgorithm
+from .avaframeUpdate_algorithm import AvaFrameUpdateAlgorithm
 
 
 class AvaFrameConnectorProvider(QgsProcessingProvider):
@@ -120,6 +121,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         self.addAlgorithm(AvaFrameLayerRenameAlgorithm())
         self.addAlgorithm(AvaFrameRunCom1DFAAlgorithm())
         self.addAlgorithm(AvaFrameGetVersionAlgorithm())
+        self.addAlgorithm(AvaFrameUpdateAlgorithm())
 
     def id(self):
         """
