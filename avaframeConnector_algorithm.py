@@ -351,14 +351,14 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'FullOperationalRun'
+        return 'fulloperationalrun'
 
     def displayName(self):
         """
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return self.tr(self.name())
+        return self.tr('Full Operational Run')
 
     def group(self):
         """
@@ -385,7 +385,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                 For more information go to: \n\
                 AvaFrame Documentation: https://docs.avaframe.org\n\
                 Homepage: https://avaframe.org\n\
-                Praxisleitfaden: https://info.bml.gv.at/dam/jcr:edebd872-2a86-4edf-ac5e-635ef11e35fe/Praxisleitfaden%20LawSim%20WLV%202022%20Gr%C3%BCn.pdf\n'
+                Praxisleitfaden: https://avaframe.org/reports\n'
 
         return self.tr(hstring) 
 

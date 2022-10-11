@@ -271,14 +271,14 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'RunCom1DFA'
+        return 'denseflowstandard'
 
     def displayName(self):
         """
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return self.tr(self.name())
+        return self.tr('Dense Flow Standard (com1DFA)')
 
     def group(self):
         """
@@ -301,7 +301,7 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self) -> str:
-        hstring = 'Runs dense flow simulations via com1DFA. \n\
+        hstring = 'Runs dense flow simulations via module com1DFA. \n\
                 For more information go to (or use the help button below): \n\
                 AvaFrame Documentation: https://docs.avaframe.org\n\
                 Homepage: https://avaframe.org\n\
