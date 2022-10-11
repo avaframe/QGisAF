@@ -178,6 +178,18 @@ class AvaFrameLayerRenameAlgorithm(QgsProcessingAlgorithm):
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
+    
+    def shortHelpString(self) -> str:
+        hstring = 'Renames com1DFA result layers by adding the values of the\
+                given variable (from the configuration file). \n\
+                For more information go to (or use the help button below): \n\
+                AvaFrame Documentation: https://docs.avaframe.org\n\
+                '
+
+        return self.tr(hstring) 
+    
+    def helpUrl(self):
+        return "https://docs.avaframe.org/en/latest/connector.html"
 
     def createInstance(self):
         return AvaFrameLayerRenameAlgorithm()
