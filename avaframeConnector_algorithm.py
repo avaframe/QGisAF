@@ -389,5 +389,8 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
 
         return self.tr(hstring) 
 
+    def helpUrl(self):
+        return "https://docs.avaframe.org/en/latest/connector.html"
+
     def createInstance(self):
         return AvaFrameConnectorAlgorithm()

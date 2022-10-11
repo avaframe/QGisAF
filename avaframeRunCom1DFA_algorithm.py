@@ -302,12 +302,16 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
     def shortHelpString(self) -> str:
         hstring = 'Runs dense flow simulations via com1DFA. \n\
-                For more information go to: \n\
+                For more information go to (or use the help button below): \n\
                 AvaFrame Documentation: https://docs.avaframe.org\n\
                 Homepage: https://avaframe.org\n\
-                Praxisleitfaden: https://info.bml.gv.at/dam/jcr:edebd872-2a86-4edf-ac5e-635ef11e35fe/Praxisleitfaden%20LawSim%20WLV%202022%20Gr%C3%BCn.pdf\n'
+                Praxisleitfaden: https://avaframe.org/reports\n'
 
         return self.tr(hstring) 
+                # Praxisleitfaden: https://info.bml.gv.at/dam/jcr:edebd872-2a86-4edf-ac5e-635ef11e35fe/Praxisleitfaden%20LawSim%20WLV%202022%20Gr%C3%BCn.pdf\n'
+
+    def helpUrl(self):
+        return "https://docs.avaframe.org/en/latest/connector.html"
 
     def createInstance(self):
         return AvaFrameRunCom1DFAAlgorithm()
