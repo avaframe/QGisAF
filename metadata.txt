@@ -10,7 +10,11 @@ version=1.3
 author=AvaFrame Team
 email=felix@avaframe.org
 
-about=Connecting AvaFrame and QGis. NOTE: see installation instructions at http://docs.avaframe.org/installation.html.
+about=Connecting AvaFrame and QGis. 
+    NOTE: see installation instructions at http://docs.avaframe.org/installation.html.
+    If you are updating the AvaFrameConnector, make sure to run UpdateAvaFrame in 
+    the Admin Group (in your toolbox)
+
 
 tracker=https://github.com/avaframe/QGisAF
 repository=https://github.com/avaframe/QGisAF

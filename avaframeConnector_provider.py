@@ -104,7 +104,8 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         QgsProcessingProvider.__init__(self)
         
     def flags(self):
-        return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
+        # return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
+        return super().flags() 
 
     def unload(self):
         """

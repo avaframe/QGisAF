@@ -128,7 +128,8 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
             ))
 
     def flags(self):
-        return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
+        return super().flags()
+        # return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
 
     def getSHPParts(self, base):
         """ Get all files of a shapefile"""
