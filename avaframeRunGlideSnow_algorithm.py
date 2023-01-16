@@ -22,56 +22,55 @@
  ***************************************************************************/
 """
 
-__author__ = 'AvaFrame Team'
-__date__ = '2022'
-__copyright__ = '(C) 2022 by AvaFrame Team'
+__author__ = "AvaFrame Team"
+__date__ = "2022"
+__copyright__ = "(C) 2022 by AvaFrame Team"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 
 import pandas
 import pathlib
 from pathlib import Path
-pandas.set_option('display.max_colwidth', 10)
 
-#qgis_process run AVAFRAME:AvaFrameRunCom1DFA -- DEM=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/avaAlr.asc ENT FOLDEST=/home/felix/tmp/Out1 PROFILE=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/LINES/pathAB.shp REL=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/REL/relAlr12.shp RES= SPLITPOINTS=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/POINTS/splitPoint.sh
+pandas.set_option("display.max_colwidth", 10)
+
+# qgis_process run AVAFRAME:AvaFrameRunCom1DFA -- DEM=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/avaAlr.asc ENT FOLDEST=/home/felix/tmp/Out1 PROFILE=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/LINES/pathAB.shp REL=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/REL/relAlr12.shp RES= SPLITPOINTS=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/POINTS/splitPoint.sh
 
 
 from qgis.PyQt.QtCore import QCoreApplication
-from qgis.core import (QgsProcessing,
-                       QgsVectorLayer,
-                       QgsRasterLayer,
-                       QgsProcessingException,
-                       QgsProcessingAlgorithm,
-                       QgsProcessingContext,
-                       QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterRasterLayer,
-                       QgsProcessingParameterMultipleLayers,
-                       QgsProcessingParameterFolderDestination,
-                       QgsProcessingOutputVectorLayer,
-                       QgsProcessingOutputMultipleLayers)
+from qgis.core import (
+    QgsProcessing,
+    QgsVectorLayer,
+    QgsRasterLayer,
+    QgsProcessingException,
+    QgsProcessingAlgorithm,
+    QgsProcessingContext,
+    QgsProcessingParameterFeatureSource,
+    QgsProcessingParameterRasterLayer,
+    QgsProcessingParameterMultipleLayers,
+    QgsProcessingParameterFolderDestination,
+    QgsProcessingOutputVectorLayer,
+    QgsProcessingOutputMultipleLayers,
+)
 
 from qgis import processing
 
 
-class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
+class AvaFrameRunGlideSnowAlgorithm(QgsProcessingAlgorithm):
     """
     This is the AvaFrame Connection, i.e. the part running with QGis. For this
     connector to work, more installation is needed. See instructions at docs.avaframe.org
     """
 
-    DEM = 'DEM'
-    REL = 'REL'
-    SECREL = 'SECREL'
-    ENT = 'ENT'
-    RES = 'RES'
-    OUTPUT = 'OUTPUT'
-    OUTPPR = 'OUTPPR'
-    FOLDEST = 'FOLDEST'
-    SMALLAVA = 'SMALLAVA'
-
+    DEM = "DEM"
+    REL = "REL"
+    RES = "RES"
+    OUTPUT = "OUTPUT"
+    OUTPPR = "OUTPPR"
+    FOLDEST = "FOLDEST"
 
     def initAlgorithm(self, config):
         """
@@ -79,63 +78,57 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
-        self.addParameter(QgsProcessingParameterRasterLayer(
-            self.DEM,
-            self.tr("DEM layer")))
+        self.addParameter(
+            QgsProcessingParameterRasterLayer(self.DEM, self.tr("DEM layer"))
+        )
 
-        self.addParameter(QgsProcessingParameterMultipleLayers(
-            self.REL,
-            self.tr('Release layer(s)'),
-            layerType=QgsProcessing.TypeVectorAnyGeometry
-            ))
-        
-        self.addParameter(QgsProcessingParameterMultipleLayers(
-            self.SECREL,
-            self.tr('Secondary release layer(s)'),
-            optional=True,
-            defaultValue = "",
-            layerType=QgsProcessing.TypeVectorAnyGeometry
-            ))
+        self.addParameter(
+            QgsProcessingParameterMultipleLayers(
+                self.REL,
+                self.tr("Release layer(s)"),
+                layerType=QgsProcessing.TypeVectorAnyGeometry,
+            )
+        )
 
-        self.addParameter(QgsProcessingParameterFeatureSource(
-                self.ENT,
-                self.tr('Entrainment layer'),
-                optional=True,
-                defaultValue = "",
-                types=[QgsProcessing.TypeVectorAnyGeometry]
-            ))
-
-        self.addParameter(QgsProcessingParameterFeatureSource(
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
                 self.RES,
-                self.tr('Resistance layer'),
+                self.tr("Resistance layer"),
                 optional=True,
-                defaultValue = "",
-                types=[QgsProcessing.TypeVectorAnyGeometry]
-            ))
+                defaultValue="",
+                types=[QgsProcessing.TypeVectorAnyGeometry],
+            )
+        )
 
-        self.addParameter(QgsProcessingParameterFolderDestination(
-                self.FOLDEST,
-                self.tr('Destination folder')
-            ))
+        self.addParameter(
+            QgsProcessingParameterFolderDestination(
+                self.FOLDEST, self.tr("Destination folder")
+            )
+        )
 
-        self.addOutput(QgsProcessingOutputVectorLayer(
-            self.OUTPUT,
-            self.tr("Output layer"),
-            QgsProcessing.TypeVectorAnyGeometry))
+        self.addOutput(
+            QgsProcessingOutputVectorLayer(
+                self.OUTPUT,
+                self.tr("Output layer"),
+                QgsProcessing.TypeVectorAnyGeometry,
+            )
+        )
 
-        self.addOutput( QgsProcessingOutputMultipleLayers(
+        self.addOutput(
+            QgsProcessingOutputMultipleLayers(
                 self.OUTPPR,
-            ))
+            )
+        )
 
     def flags(self):
         return super().flags()
         # return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
 
     def getSHPParts(self, base):
-        """ Get all files of a shapefile"""
+        """Get all files of a shapefile"""
 
         globBase = base.parent
-        globbed = globBase.glob(base.stem + '.*')
+        globbed = globBase.glob(base.stem + ".*")
 
         return globbed
 
@@ -145,11 +138,11 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         """
 
         from avaframe.in3Utils import initializeProject as iP
-        from avaframe import runOperational as runOp
+        from avaframe import runCom5GlideSnow as runGs
         import avaframe.version as gv
-        from . import avaframeConnector_commonFunc as cF 
+        from . import avaframeConnector_commonFunc as cF
 
-        feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
+        feedback.pushInfo("AvaFrame Version: " + gv.getVersion())
 
         sourceDEM = self.parameterAsRasterLayer(parameters, self.DEM, context)
         if sourceDEM is None:
@@ -164,20 +157,9 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         if allREL:
             relDict = {lyr.source(): lyr for lyr in allREL}
 
-        # Secondary release files
-        allSecREL = self.parameterAsLayerList(parameters, self.SECREL, context)
-
-        secRelDict = {}
-        if allSecREL:
-            secRelDict = {lyr.source(): lyr for lyr in allSecREL}
-
-
-        sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
-
         sourceRES = self.parameterAsVectorLayer(parameters, self.RES, context)
 
         sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
-
 
         # create folder structure
         targetDir = pathlib.Path(sourceFOLDEST)
@@ -185,56 +167,47 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo(sourceDEM.source())
 
-
         # copy DEM
         cF.copyDEM(sourceDEM, targetDir)
 
         # copy all release shapefile parts
-        cF.copyMultipleShp(relDict, targetDir / 'Inputs' / 'REL')
-       
-        # copy all secondary release shapefile parts
-        cF.copyMultipleShp(secRelDict, targetDir / 'Inputs' / 'SECREL')
-
-        # copy all entrainment shapefile parts
-        if sourceENT is not None:
-            cF.copyShp(sourceENT.source(), targetDir / 'Inputs' / 'ENT')
+        cF.copyMultipleShp(relDict, targetDir / "Inputs" / "REL")
 
         # copy all resistance shapefile parts
         if sourceRES is not None:
-            cF.copyShp(sourceRES.source(), targetDir / 'Inputs' / 'RES')
+            cF.copyShp(sourceRES.source(), targetDir / "Inputs" / "RES")
 
-        feedback.pushInfo('Starting the simulations')
-        feedback.pushInfo('This might take a while')
-        feedback.pushInfo('Open Plugins -> Python Console to see the progress')
+        feedback.pushInfo("Starting the simulations")
+        feedback.pushInfo("This might take a while")
+        feedback.pushInfo("Open Plugins -> Python Console to see the progress")
 
-        abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
+        rasterResults = runGs.runGlideSnow(str(targetDir))
 
-        feedback.pushInfo('Done, start loading the results')
+        feedback.pushInfo("Done, start loading the results")
 
         scriptDir = Path(__file__).parent
         qmls = dict()
-        qmls['ppr'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
-        qmls['pft'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
-        qmls['pfv'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
-        qmls['PR'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
-        qmls['FV'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
-        qmls['FT'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
+        qmls["ppr"] = str(scriptDir / "QGisStyles" / "ppr.qml")
+        qmls["pft"] = str(scriptDir / "QGisStyles" / "pft.qml")
+        qmls["pfv"] = str(scriptDir / "QGisStyles" / "pfv.qml")
+        qmls["PR"] = str(scriptDir / "QGisStyles" / "ppr.qml")
+        qmls["FV"] = str(scriptDir / "QGisStyles" / "pfv.qml")
+        qmls["FT"] = str(scriptDir / "QGisStyles" / "pft.qml")
 
         allRasterLayers = list()
         for index, row in rasterResults.iterrows():
             print(row["files"], row["resType"])
-            rstLayer = QgsRasterLayer(str(row['files']), row['names'])
+            rstLayer = QgsRasterLayer(str(row["files"]), row["names"])
             try:
-                rstLayer.loadNamedStyle(qmls[row['resType']])
+                rstLayer.loadNamedStyle(qmls[row["resType"]])
             except:
-                feedback.pushInfo('No matching layer style found')
+                feedback.pushInfo("No matching layer style found")
                 pass
 
             allRasterLayers.append(rstLayer)
 
         # should work, but doesn't...
         # rstLayer.setName('ThisIsDaStuff')
-
 
         # # Add SamosAT Group
         # Root = QgsProject.instance().layerTreeRoot()
@@ -253,14 +226,15 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         for item in allRasterLayers:
             context.addLayerToLoadOnCompletion(
                 item.id(),
-                QgsProcessingContext.LayerDetails('raster layer',
-                                              context.project(),
-                                              self.OUTPPR))
+                QgsProcessingContext.LayerDetails(
+                    "raster layer", context.project(), self.OUTPPR
+                ),
+            )
 
-        feedback.pushInfo('\n---------------------------------')
-        feedback.pushInfo('Done, find results and logs here:')
+        feedback.pushInfo("\n---------------------------------")
+        feedback.pushInfo("Done, find results and logs here:")
         feedback.pushInfo(str(targetDir.resolve()))
-        feedback.pushInfo('---------------------------------\n')
+        feedback.pushInfo("---------------------------------\n")
 
         return {self.OUTPPR: allRasterLayers}
 
@@ -272,14 +246,14 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'com1denseflow'
+        return "com5glidesnow"
 
     def displayName(self):
         """
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return self.tr('Dense Flow (com1)')
+        return self.tr("Glide Snow (com5)")
 
     def group(self):
         """
@@ -296,23 +270,23 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Operational'
+        return "Experimental"
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
+        return QCoreApplication.translate("Processing", string)
 
     def shortHelpString(self) -> str:
-        hstring = 'Runs dense flow simulations via module com1DFA. \n\
+        hstring = "Runs glide snow simulations via module com1DFA. \n\
                 For more information go to (or use the help button below): \n\
                 AvaFrame Documentation: https://docs.avaframe.org\n\
                 Homepage: https://avaframe.org\n\
-                Praxisleitfaden: https://avaframe.org/reports\n'
+                Praxisleitfaden: https://avaframe.org/reports\n"
 
-        return self.tr(hstring) 
-                # Praxisleitfaden: https://info.bml.gv.at/dam/jcr:edebd872-2a86-4edf-ac5e-635ef11e35fe/Praxisleitfaden%20LawSim%20WLV%202022%20Gr%C3%BCn.pdf\n'
+        return self.tr(hstring)
+        # Praxisleitfaden: https://info.bml.gv.at/dam/jcr:edebd872-2a86-4edf-ac5e-635ef11e35fe/Praxisleitfaden%20LawSim%20WLV%202022%20Gr%C3%BCn.pdf\n'
 
     def helpUrl(self):
         return "https://docs.avaframe.org/en/latest/connector.html"
 
     def createInstance(self):
-        return AvaFrameRunCom1DFAAlgorithm()
+        return AvaFrameRunGlideSnowAlgorithm()
