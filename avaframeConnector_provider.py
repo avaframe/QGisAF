@@ -22,17 +22,17 @@
  ***************************************************************************/
 """
 
-__author__ = 'AvaFrame Team'
-__date__ = '2022-08-26'
-__copyright__ = '(C) 2022 by AvaFrame Team'
+__author__ = "AvaFrame Team"
+__date__ = "2022-08-26"
+__copyright__ = "(C) 2022 by AvaFrame Team"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 import sys
 import os.path
-import subprocess 
+import subprocess
 import os
 import inspect
 from qgis.core import Qgis
@@ -50,7 +50,7 @@ from qgis.PyQt.QtWidgets import (
     QMessageBox,
 )
 
-# Check for avaframe, if not available, install... 
+# Check for avaframe, if not available, install...
 # Note: not the best solution (okok, it is utterly disgustingly hacky), but the only one available atm (Sep 2022)
 def find_python():
     if sys.platform != "win32":
@@ -64,18 +64,21 @@ def find_python():
 
     raise Exception("Python executable not found")
 
+
 try:
-    import avaframe 
-except ModuleNotFoundError: 
+    import avaframe
+except ModuleNotFoundError:
     # python_exe = find_python()
     # subprocess.call([python_exe, "-m", "pip", "install", "--user", "avaframe"])
     # subprocess.call([python_exe, "-m", "pip", "install", "--upgrade", "--user", "pandas", "numpy"])
-    subprocess.call(['pip3', 'install', '--upgrade', '--user', 'pandas', 'numpy'])
-    subprocess.call(['pip3', 'install', 'avaframe', '--user'])
-    try: 
+    subprocess.call(["pip3", "install", "--upgrade", "--user", "pandas", "numpy"])
+    subprocess.call(["pip3", "install", "avaframe", "--user"])
+    try:
         import avaframe
     except ModuleNotFoundError:
-        QMessageBox.information(None, 'INFO', "Please restart QGis to finalize AvaFrame installation")
+        QMessageBox.information(
+            None, "INFO", "Please restart QGis to finalize AvaFrame installation"
+        )
 
 # catch annoying ValueError from cython
 # try:
@@ -83,7 +86,7 @@ except ModuleNotFoundError:
 #     from .avaframeLayerRename_algorithm import AvaFrameLayerRenameAlgorithm
 #     from .avaframeGetVersion_algorithm import AvaFrameGetVersionAlgorithm
 #     from .avaframeRunCom1DFA_algorithm import AvaFrameRunCom1DFAAlgorithm
-# except ValueError: 
+# except ValueError:
 #     python_exe = find_python()
 #     subprocess.check_call([python_exe, "-m", "pip", "install", "--upgrade", "--user", "pandas", "numpy"])
 # End of hacky solution...
@@ -92,20 +95,20 @@ from .avaframeConnector_algorithm import AvaFrameConnectorAlgorithm
 from .avaframeLayerRename_algorithm import AvaFrameLayerRenameAlgorithm
 from .avaframeGetVersion_algorithm import AvaFrameGetVersionAlgorithm
 from .avaframeRunCom1DFA_algorithm import AvaFrameRunCom1DFAAlgorithm
+from .avaframeRunGlideSnow_algorithm import AvaFrameRunGlideSnowAlgorithm
 from .avaframeUpdate_algorithm import AvaFrameUpdateAlgorithm
 
 
 class AvaFrameConnectorProvider(QgsProcessingProvider):
-
     def __init__(self):
         """
         Default constructor.
         """
         QgsProcessingProvider.__init__(self)
-        
+
     def flags(self):
         # return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
-        return super().flags() 
+        return super().flags()
 
     def unload(self):
         """
@@ -121,6 +124,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         self.addAlgorithm(AvaFrameConnectorAlgorithm())
         self.addAlgorithm(AvaFrameLayerRenameAlgorithm())
         self.addAlgorithm(AvaFrameRunCom1DFAAlgorithm())
+        self.addAlgorithm(AvaFrameRunGlideSnowAlgorithm())
         self.addAlgorithm(AvaFrameGetVersionAlgorithm())
         self.addAlgorithm(AvaFrameUpdateAlgorithm())
 
@@ -130,7 +134,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         string should be a unique, short, character only string, eg "qgis" or
         "gdal". This string should not be localised.
         """
-        return 'AVAFRAME'
+        return "AVAFRAME"
 
     def name(self):
         """
@@ -139,7 +143,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
 
         This string should be short (e.g. "Lastools") and localised.
         """
-        return self.tr('AVAFRAME')
+        return self.tr("AVAFRAME")
 
     def icon(self):
         """
@@ -147,7 +151,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         the Processing toolbox.
         """
         cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-        icon = QIcon(os.path.join(os.path.join(cmd_folder, 'icon.png')))
+        icon = QIcon(os.path.join(os.path.join(cmd_folder, "icon.png")))
         return icon
 
     def longName(self):
