@@ -96,6 +96,8 @@ from .avaframeLayerRename_algorithm import AvaFrameLayerRenameAlgorithm
 from .avaframeGetVersion_algorithm import AvaFrameGetVersionAlgorithm
 from .avaframeRunCom1DFA_algorithm import AvaFrameRunCom1DFAAlgorithm
 from .avaframeRunGlideSnow_algorithm import AvaFrameRunGlideSnowAlgorithm
+from .avaframeRunAna4ProbRun_algorithm import AvaFrameRunAna4ProbAlgorithm
+from .avaframeGlideSnowConvert_algorithm import AvaFrameGlideSnowConvertAlgorithm
 from .avaframeUpdate_algorithm import AvaFrameUpdateAlgorithm
 
 
@@ -125,6 +127,8 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         self.addAlgorithm(AvaFrameLayerRenameAlgorithm())
         self.addAlgorithm(AvaFrameRunCom1DFAAlgorithm())
         self.addAlgorithm(AvaFrameRunGlideSnowAlgorithm())
+        self.addAlgorithm(AvaFrameRunAna4ProbAlgorithm())
+        self.addAlgorithm(AvaFrameGlideSnowConvertAlgorithm())
         self.addAlgorithm(AvaFrameGetVersionAlgorithm())
         self.addAlgorithm(AvaFrameUpdateAlgorithm())
 
