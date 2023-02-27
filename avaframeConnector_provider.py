@@ -68,9 +68,6 @@ def find_python():
 try:
     import avaframe
 except ModuleNotFoundError:
-    # python_exe = find_python()
-    # subprocess.call([python_exe, "-m", "pip", "install", "--user", "avaframe"])
-    # subprocess.call([python_exe, "-m", "pip", "install", "--upgrade", "--user", "pandas", "numpy"])
     subprocess.call(["pip3", "install", "--upgrade", "--user", "pandas", "numpy"])
     subprocess.call(["pip3", "install", "avaframe", "--user"])
     try:
@@ -92,13 +89,13 @@ except ModuleNotFoundError:
 # End of hacky solution...
 
 from .avaframeConnector_algorithm import AvaFrameConnectorAlgorithm
-from .avaframeLayerRename_algorithm import AvaFrameLayerRenameAlgorithm
-from .avaframeGetVersion_algorithm import AvaFrameGetVersionAlgorithm
-from .avaframeRunCom1DFA_algorithm import AvaFrameRunCom1DFAAlgorithm
-from .avaframeRunGlideSnow_algorithm import AvaFrameRunGlideSnowAlgorithm
+from .layerRename_algorithm import layerRenameAlgorithm
+from .getVersion_algorithm import getVersionAlgorithm
+from .runCom1DFA_algorithm import runCom1DFAAlgorithm
+from .runCom5GlideSnow_algorithm import runCom5GlideSnowAlgorithm
 from .avaframeRunAna4ProbRun_algorithm import AvaFrameRunAna4ProbAlgorithm
 from .avaframeGlideSnowConvert_algorithm import AvaFrameGlideSnowConvertAlgorithm
-from .avaframeUpdate_algorithm import AvaFrameUpdateAlgorithm
+from .update_algorithm import updateAlgorithm
 
 
 class AvaFrameConnectorProvider(QgsProcessingProvider):
@@ -124,13 +121,13 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         Loads all algorithms belonging to this provider.
         """
         self.addAlgorithm(AvaFrameConnectorAlgorithm())
-        self.addAlgorithm(AvaFrameLayerRenameAlgorithm())
-        self.addAlgorithm(AvaFrameRunCom1DFAAlgorithm())
-        self.addAlgorithm(AvaFrameRunGlideSnowAlgorithm())
+        self.addAlgorithm(layerRenameAlgorithm())
+        self.addAlgorithm(runCom1DFAAlgorithm())
+        self.addAlgorithm(runCom5GlideSnowAlgorithm())
         self.addAlgorithm(AvaFrameRunAna4ProbAlgorithm())
         self.addAlgorithm(AvaFrameGlideSnowConvertAlgorithm())
-        self.addAlgorithm(AvaFrameGetVersionAlgorithm())
-        self.addAlgorithm(AvaFrameUpdateAlgorithm())
+        self.addAlgorithm(getVersionAlgorithm())
+        self.addAlgorithm(updateAlgorithm())
 
     def id(self):
         """

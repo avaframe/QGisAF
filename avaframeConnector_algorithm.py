@@ -280,11 +280,11 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         scriptDir = Path(__file__).parent
         qmls = dict()
         qmls['ppr'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
-        # qmls['pft'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
+        qmls['pft'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
         qmls['pfv'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
         qmls['PR'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
         qmls['FV'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
-        # qmls['FT'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
+        qmls['FT'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
 
         allRasterLayers = list()
         for index, row in rasterResults.iterrows():
