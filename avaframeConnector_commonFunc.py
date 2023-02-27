@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import pathlib
 import shutil
+import pandas as pd
+from avaframe.in3Utils import fileHandlerUtils as fU
 
 
 def copyDEM(dem, targetDir):
@@ -65,9 +67,37 @@ def getSHPParts(base):
         Returns
         -------
         generator with all shapefile parts
-    ''' 
+    '''
 
     globBase = base.parent
     globbed = globBase.glob(base.stem + '.*')
 
     return globbed
+
+
+def getLatestPeak(targetDir):
+    '''Get latest peakFiles of com1DFA results
+
+        Parameters
+        -----------
+        targetDir: pathlib path
+            to avalanche directory
+        Returns
+        -------
+    '''
+    avaDir = pathlib.Path(str(targetDir))
+    inputDirPeak = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
+    allRasterResults = fU.makeSimDF(inputDirPeak, avaDir=avaDir)
+
+    # Get info about latest simulations
+    inputDirConf = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles'
+    latestCsv = inputDirConf / 'latestSims.csv'
+    with open(latestCsv, 'rb') as file:
+        latestResults = pd.read_csv(file, index_col=0, keep_default_na=False)
+
+    # Only use results from latest run
+    rasterResults = allRasterResults[allRasterResults.simID.isin(latestResults.index)]
+
+    return rasterResults
+
+

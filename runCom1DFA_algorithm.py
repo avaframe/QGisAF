@@ -33,6 +33,7 @@ __revision__ = '$Format:%H$'
 
 import pandas
 import pathlib
+import subprocess
 from pathlib import Path
 pandas.set_option('display.max_colwidth', 10)
 
@@ -56,7 +57,7 @@ from qgis.core import (QgsProcessing,
 from qgis import processing
 
 
-class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
+class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
     """
     This is the AvaFrame Connection, i.e. the part running with QGis. For this
     connector to work, more installation is needed. See instructions at docs.avaframe.org
@@ -146,6 +147,7 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         from avaframe.in3Utils import initializeProject as iP
         from avaframe import runOperational as runOp
+        from avaframe.in3Utils import fileHandlerUtils as fU
         import avaframe.version as gv
         from . import avaframeConnector_commonFunc as cF 
 
@@ -207,7 +209,10 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo('This might take a while')
         feedback.pushInfo('Open Plugins -> Python Console to see the progress')
 
-        abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
+        subprocess.call(['python', '-m', 'avaframe.runOperational', str(targetDir)])
+
+        # Get peakfiles to return to QGIS
+        rasterResults = cF.getLatestPeak(targetDir)
 
         feedback.pushInfo('Done, start loading the results')
 
@@ -222,7 +227,7 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         allRasterLayers = list()
         for index, row in rasterResults.iterrows():
-            print(row["files"], row["resType"])
+            print(row["files"], row["resType"], row["names"])
             rstLayer = QgsRasterLayer(str(row['files']), row['names'])
             try:
                 rstLayer.loadNamedStyle(qmls[row['resType']])
@@ -253,7 +258,7 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         for item in allRasterLayers:
             context.addLayerToLoadOnCompletion(
                 item.id(),
-                QgsProcessingContext.LayerDetails('raster layer',
+                QgsProcessingContext.LayerDetails(item.name(),
                                               context.project(),
                                               self.OUTPPR))
 
@@ -315,4 +320,4 @@ class AvaFrameRunCom1DFAAlgorithm(QgsProcessingAlgorithm):
         return "https://docs.avaframe.org/en/latest/connector.html"
 
     def createInstance(self):
-        return AvaFrameRunCom1DFAAlgorithm()
+        return runCom1DFAAlgorithm()

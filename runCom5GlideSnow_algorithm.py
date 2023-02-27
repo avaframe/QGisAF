@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*hhhj
 
 """
 /***************************************************************************
@@ -33,11 +33,13 @@ __revision__ = "$Format:%H$"
 
 import pandas
 import pathlib
+import subprocess
 from pathlib import Path
+import pandas as pd
+from time import sleep
 
 pandas.set_option("display.max_colwidth", 10)
-
-# qgis_process run AVAFRAME:AvaFrameRunCom1DFA -- DEM=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/avaAlr.asc ENT FOLDEST=/home/felix/tmp/Out1 PROFILE=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/LINES/pathAB.shp REL=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/REL/relAlr12.shp RES= SPLITPOINTS=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/POINTS/splitPoint.sh
+MESSAGE_CATEGORY = 'TaskFromFunction'
 
 
 from qgis.PyQt.QtCore import QCoreApplication
@@ -54,12 +56,15 @@ from qgis.core import (
     QgsProcessingParameterFolderDestination,
     QgsProcessingOutputVectorLayer,
     QgsProcessingOutputMultipleLayers,
+    QgsProcessingContext,
+    Qgis,
+    QgsMessageLog,
 )
 
 from qgis import processing
 
 
-class AvaFrameRunGlideSnowAlgorithm(QgsProcessingAlgorithm):
+class runCom5GlideSnowAlgorithm(QgsProcessingAlgorithm):
     """
     This is the AvaFrame Connection, i.e. the part running with QGis. For this
     connector to work, more installation is needed. See instructions at docs.avaframe.org
@@ -124,13 +129,38 @@ class AvaFrameRunGlideSnowAlgorithm(QgsProcessingAlgorithm):
         return super().flags()
         # return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
 
-    def getSHPParts(self, base):
+    def run(self, task, avaDir):
         """Get all files of a shapefile"""
+        from avaframe import runCom5GlideSnow as runGs
 
-        globBase = base.parent
-        globbed = globBase.glob(base.stem + ".*")
+        QgsMessageLog.logMessage('Started task {}'.format(task.description()),
+                             MESSAGE_CATEGORY, Qgis.Info)
+        QgsMessageLog.logMessage('AvaDir {}'.format(avaDir), MESSAGE_CATEGORY, Qgis.Info)
+        rasterResults = runGs.runGlideSnow(avaDir)
+        QgsMessageLog.logMessage('DONE HERE', MESSAGE_CATEGORY, Qgis.Info)
 
-        return globbed
+        return rasterResults
+
+    def completed(self, exception, result=None):
+        """this is called when run is finished. Exception is not None if run
+        raises an exception. Result is the return value of run."""
+        if exception is None:
+            if result is None:
+                QgsMessageLog.logMessage(
+                    'Completed with no exception and no result ' \
+                    '(probably the task was manually canceled by the user)',
+                    MESSAGE_CATEGORY, Qgis.Warning)
+            else:
+                QgsMessageLog.logMessage(
+                    'Task {name} completed\n',
+                    MESSAGE_CATEGORY, Qgis.Info)
+        else:
+            QgsMessageLog.logMessage("Exception: {}".format(exception),
+                                     MESSAGE_CATEGORY, Qgis.Critical)
+            raise exception
+
+
+
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -138,6 +168,7 @@ class AvaFrameRunGlideSnowAlgorithm(QgsProcessingAlgorithm):
         """
 
         from avaframe.in3Utils import initializeProject as iP
+        from avaframe.in3Utils import fileHandlerUtils as fU
         from avaframe import runCom5GlideSnow as runGs
         import avaframe.version as gv
         from . import avaframeConnector_commonFunc as cF
@@ -179,9 +210,27 @@ class AvaFrameRunGlideSnowAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo("Starting the simulations")
         feedback.pushInfo("This might take a while")
-        feedback.pushInfo("Open Plugins -> Python Console to see the progress")
+        feedback.pushInfo("A console should have opened")
 
-        rasterResults = runGs.runGlideSnow(str(targetDir))
+
+        # Original solution
+        # rasterResults = runGs.runGlideSnow(str(targetDir))
+
+        # This kinda works
+        # process = subprocess.Popen(['python', '-m', 'avaframe.runCom5GlideSnow', str(targetDir)], stdout=subprocess.PIPE, universal_newlines=True)
+        # while True:
+        #     output = process.stdout.readline()
+        #     # if output == '' and process.poll() is not None:
+        #     if len(output) == 0 and process.poll() is not None:  
+        #         break
+        #     if output:
+        #         print(output.strip())
+        # rc = process.poll()
+
+        output =  subprocess.run(['python', '-m', 'avaframe.runCom5GlideSnow', str(targetDir)])
+
+        # Get peakfiles to return to QGIS
+        rasterResults = cF.getLatestPeak(targetDir)
 
         feedback.pushInfo("Done, start loading the results")
 
@@ -206,28 +255,13 @@ class AvaFrameRunGlideSnowAlgorithm(QgsProcessingAlgorithm):
 
             allRasterLayers.append(rstLayer)
 
-        # should work, but doesn't...
-        # rstLayer.setName('ThisIsDaStuff')
-
-        # # Add SamosAT Group
-        # Root = QgsProject.instance().layerTreeRoot()
-
-        # # See if SamosAT group exists
-        # # if not, create
-        # SatGroup = Root.findGroup("com1DFA")
-        # if SatGroup:
-        #     feedback.pushDebugInfo('Found')
-        # else:
-        #     feedback.pushDebugInfo('Not Found')
-        #     SatGroup = Root.insertGroup(0, "com1DFA")
-
         context.temporaryLayerStore().addMapLayers(allRasterLayers)
 
         for item in allRasterLayers:
             context.addLayerToLoadOnCompletion(
                 item.id(),
                 QgsProcessingContext.LayerDetails(
-                    "raster layer", context.project(), self.OUTPPR
+                    item.name(), context.project(), self.OUTPPR
                 ),
             )
 
@@ -289,4 +323,4 @@ class AvaFrameRunGlideSnowAlgorithm(QgsProcessingAlgorithm):
         return "https://docs.avaframe.org/en/latest/connector.html"
 
     def createInstance(self):
-        return AvaFrameRunGlideSnowAlgorithm()
+        return runCom5GlideSnowAlgorithm()
