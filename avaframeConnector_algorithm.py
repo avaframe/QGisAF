@@ -106,13 +106,13 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             self.tr('Release layer(s)'),
             layerType=QgsProcessing.TypeVectorAnyGeometry
             ))
-        
-        self.addParameter(QgsProcessingParameterMultipleLayers(
+
+        self.addParameter(QgsProcessingParameterFeatureSource(
             self.SECREL,
-            self.tr('Secondary release layer(s)'),
+            self.tr('Secondary release layer (only one is allowed)'),
             optional=True,
-            defaultValue = "",
-            layerType=QgsProcessing.TypeVectorAnyGeometry
+            defaultValue="",
+            types=[QgsProcessing.TypeVectorAnyGeometry]
             ))
 
         self.addParameter(QgsProcessingParameterFeatureSource(
@@ -182,6 +182,9 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
 
+        # targetADDTONAME = self.parameterAsString(parameters, self.ADDTONAME, context)
+        targetADDTONAME = ''
+
         sourceDEM = self.parameterAsRasterLayer(parameters, self.DEM, context)
         if sourceDEM is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
@@ -198,9 +201,11 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         # Secondary release files
         allSecREL = self.parameterAsLayerList(parameters, self.SECREL, context)
 
-        secRelDict = {}
-        if allSecREL:
-            secRelDict = {lyr.source(): lyr for lyr in allSecREL}
+        # Secondary release files
+        sourceSecREL = self.parameterAsVectorLayer(parameters, self.SECREL, context)
+        if sourceSecREL is not None:
+            srInfo = '_SR' + Path(sourceSecREL.source()).stem
+            targetADDTONAME = targetADDTONAME + srInfo
 
 
         sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
@@ -223,10 +228,12 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         cF.copyDEM(sourceDEM, targetDir)
 
         # copy all release shapefile parts
-        cF.copyMultipleShp(relDict, targetDir / 'Inputs' / 'REL')
-       
+        cF.copyMultipleShp(relDict, targetDir / 'Inputs' / 'REL', targetADDTONAME)
+
         # copy all secondary release shapefile parts
-        cF.copyMultipleShp(secRelDict, targetDir / 'Inputs' / 'SECREL')
+        if sourceSecREL is not None:
+            cF.copyShp(sourceSecREL.source(), targetDir / 'Inputs' / 'SECREL')
+
 
         # copy all entrainment shapefile parts
         if sourceENT is not None:
@@ -235,7 +242,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         # copy all resistance shapefile parts
         if sourceRES is not None:
             cF.copyShp(sourceRES.source(), targetDir / 'Inputs' / 'RES')
-        
+
         # copy all Splitpoint shapefile parts
         if sourceSPLITPOINTS is not None:
             cF.copyShp(sourceSPLITPOINTS.source(), targetDir / 'Inputs' / 'POINTS')
@@ -266,7 +273,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
 
         feedback.pushInfo('Done, start loading the results')
-        
+
         if abResultsSource == 'None':
             source = None
             feedback.pushInfo('Alpha Beta was not run')
@@ -275,7 +282,6 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             shpLayer = str(abResultsSource) + '.shp'
 
             source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
-
 
         scriptDir = Path(__file__).parent
         qmls = dict()
@@ -330,7 +336,6 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                 QgsProcessingContext.LayerDetails('OGR layer',
                                                   context.project(),
                                                   self.OUTPUT))
-
 
         feedback.pushInfo('\n---------------------------------')
         feedback.pushInfo('Done, find results and logs here:')

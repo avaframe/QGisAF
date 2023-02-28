@@ -49,9 +49,12 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingContext,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterRasterLayer,
+                       QgsProcessingParameterString,
                        QgsProcessingParameterMultipleLayers,
                        QgsProcessingParameterFolderDestination,
                        QgsProcessingOutputVectorLayer,
+                       QgsProject,
+                       QgsLayerTreeLayer,
                        QgsProcessingOutputMultipleLayers)
 
 from qgis import processing
@@ -71,6 +74,7 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
     OUTPUT = 'OUTPUT'
     OUTPPR = 'OUTPPR'
     FOLDEST = 'FOLDEST'
+    ADDTONAME = "ADDTONAME"
     SMALLAVA = 'SMALLAVA'
 
 
@@ -89,18 +93,26 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
             self.tr('Release layer(s)'),
             layerType=QgsProcessing.TypeVectorAnyGeometry
             ))
-        
-        self.addParameter(QgsProcessingParameterMultipleLayers(
+
+        # self.addParameter(QgsProcessingParameterString(
+        #         self.ADDTONAME,
+        #         self.tr('Add to simName (default empty)'),
+        #         '',
+        #         optional=True,
+        #     ))
+
+        # self.addParameter(QgsProcessingParameterMultipleLayers(
+        self.addParameter(QgsProcessingParameterFeatureSource(
             self.SECREL,
-            self.tr('Secondary release layer(s)'),
+            self.tr('Secondary release layer (only one is allowed)'),
             optional=True,
             defaultValue = "",
-            layerType=QgsProcessing.TypeVectorAnyGeometry
+            types=[QgsProcessing.TypeVectorAnyGeometry]
             ))
 
         self.addParameter(QgsProcessingParameterFeatureSource(
                 self.ENT,
-                self.tr('Entrainment layer'),
+                self.tr('Entrainment layer (only one is allowed)'),
                 optional=True,
                 defaultValue = "",
                 types=[QgsProcessing.TypeVectorAnyGeometry]
@@ -108,11 +120,12 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         self.addParameter(QgsProcessingParameterFeatureSource(
                 self.RES,
-                self.tr('Resistance layer'),
+                self.tr('Resistance layer (only one is allowed)'),
                 optional=True,
                 defaultValue = "",
                 types=[QgsProcessing.TypeVectorAnyGeometry]
             ))
+
 
         self.addParameter(QgsProcessingParameterFolderDestination(
                 self.FOLDEST,
@@ -132,14 +145,6 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         return super().flags()
         # return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
 
-    def getSHPParts(self, base):
-        """ Get all files of a shapefile"""
-
-        globBase = base.parent
-        globbed = globBase.glob(base.stem + '.*')
-
-        return globbed
-
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
@@ -152,6 +157,9 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         from . import avaframeConnector_commonFunc as cF 
 
         feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
+
+        # targetADDTONAME = self.parameterAsString(parameters, self.ADDTONAME, context)
+        targetADDTONAME = ''
 
         sourceDEM = self.parameterAsRasterLayer(parameters, self.DEM, context)
         if sourceDEM is None:
@@ -167,12 +175,10 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
             relDict = {lyr.source(): lyr for lyr in allREL}
 
         # Secondary release files
-        allSecREL = self.parameterAsLayerList(parameters, self.SECREL, context)
-
-        secRelDict = {}
-        if allSecREL:
-            secRelDict = {lyr.source(): lyr for lyr in allSecREL}
-
+        sourceSecREL = self.parameterAsVectorLayer(parameters, self.SECREL, context)
+        if sourceSecREL is not None:
+            srInfo = '_SR' + Path(sourceSecREL.source()).stem
+            targetADDTONAME = targetADDTONAME + srInfo
 
         sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
 
@@ -180,22 +186,21 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
 
-
         # create folder structure
         targetDir = pathlib.Path(sourceFOLDEST)
         iP.initializeFolderStruct(targetDir, removeExisting=False)
 
         feedback.pushInfo(sourceDEM.source())
 
-
         # copy DEM
         cF.copyDEM(sourceDEM, targetDir)
 
         # copy all release shapefile parts
-        cF.copyMultipleShp(relDict, targetDir / 'Inputs' / 'REL')
-       
+        cF.copyMultipleShp(relDict, targetDir / 'Inputs' / 'REL', targetADDTONAME)
+
         # copy all secondary release shapefile parts
-        cF.copyMultipleShp(secRelDict, targetDir / 'Inputs' / 'SECREL')
+        if sourceSecREL is not None:
+            cF.copyShp(sourceSecREL.source(), targetDir / 'Inputs' / 'SECREL')
 
         # copy all entrainment shapefile parts
         if sourceENT is not None:
@@ -237,30 +242,30 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
             allRasterLayers.append(rstLayer)
 
-        # should work, but doesn't...
-        # rstLayer.setName('ThisIsDaStuff')
 
-
-        # # Add SamosAT Group
+        # # Add Group
         # Root = QgsProject.instance().layerTreeRoot()
 
-        # # See if SamosAT group exists
-        # # if not, create
-        # SatGroup = Root.findGroup("com1DFA")
-        # if SatGroup:
+        # # # See if SamosAT group exists
+        # # # if not, create
+        # myGroup = Root.findGroup(targetGROUPDEST)
+        # if myGroup:
         #     feedback.pushDebugInfo('Found')
         # else:
         #     feedback.pushDebugInfo('Not Found')
-        #     SatGroup = Root.insertGroup(0, "com1DFA")
+        #     myGroup = Root.insertGroup(0, targetGROUPDEST)
 
         context.temporaryLayerStore().addMapLayers(allRasterLayers)
 
         for item in allRasterLayers:
+            # QgsProject.instance().addMapLayer(item, False) # False so that it doesn't get inserted at default position
+            # context.temporaryLayerStore().addMapLayer(item)
             context.addLayerToLoadOnCompletion(
                 item.id(),
                 QgsProcessingContext.LayerDetails(item.name(),
                                               context.project(),
                                               self.OUTPPR))
+            # myGroup.insertChildNode(1, QgsLayerTreeLayer(item))
 
         feedback.pushInfo('\n---------------------------------')
         feedback.pushInfo('Done, find results and logs here:')

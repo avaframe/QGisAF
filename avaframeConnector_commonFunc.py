@@ -23,36 +23,42 @@ def copyDEM(dem, targetDir):
         pass
 
 
-def copyMultipleShp(sourceDict, targetPath):
+def copyMultipleShp(sourceDict, targetPath, addToName=''):
     ''' copies multiple shapefile parts to targetPath
-    
+
         Parameters
         -----------
         sourceDict: 
             dict with multiple qgis source of shapefiles (path string)
         targetPath: string
-            path to where the files are being copied (directory) 
+            path to where the files are being copied (directory)
+        addToName: string
+            add this string to shape name
     '''
     for source in sourceDict:
-        copyShp(source, targetPath) 
+        copyShp(source, targetPath, addToName)
 
 
-def copyShp(source, targetPath):
+def copyShp(source, targetPath, addToName=''):
     ''' copies shapefile parts to targetPath
-    
+
         Parameters
         -----------
-        source: 
+        source:
             qgis source of shapefile (path string)
         targetPath: string
             path to where the files are being copied (directory) 
+        addToName: string
+            add this string to shape name
     '''
     sourcePath = pathlib.Path(source)
 
     shpParts = getSHPParts(sourcePath)
     for shpPart in shpParts:
+        nName = shpPart.stem + addToName + shpPart.suffix
+        nTargetPath = targetPath / nName
         try:
-            shutil.copy(shpPart, targetPath)
+            shutil.copy(shpPart, nTargetPath)
         except shutil.SameFileError:
             pass
 
