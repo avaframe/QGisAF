@@ -5,6 +5,7 @@ import pandas as pd
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 
+
 def copyDEM(dem, targetDir):
     ''' copies the DEM to targetDir/Inputs
     
@@ -90,6 +91,8 @@ def getLatestPeak(targetDir):
             to avalanche directory
         Returns
         -------
+        rasterResults: dataframe
+            dataframe with info about simulations, including path
     '''
     avaDir = pathlib.Path(str(targetDir))
     inputDirPeak = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
@@ -107,3 +110,112 @@ def getLatestPeak(targetDir):
     return rasterResults
 
 
+def getAlphaBetaResults(targetDir):
+    '''Get results of com2AB
+
+        Parameters
+        -----------
+        targetDir: pathlib path
+            to avalanche directory
+        Returns
+        -------
+
+    '''
+    from qgis.core import (QgsVectorLayer)
+    avaDir = pathlib.Path(str(targetDir))
+    abResultsFile = avaDir / 'Outputs' / 'com2AB' / 'com2AB_Results.shp'
+
+    if pathlib.Path.is_file(abResultsFile):
+        abResultsLayer = QgsVectorLayer(str(abResultsFile), "AlphaBeta (com2)", "ogr")
+        return abResultsLayer
+    else:
+        return 'None'
+
+
+def addStyleToCom1DFAResults(rasterResults):
+    ''' add QML Style to com1DFA raster results
+
+        Parameters
+        -----------
+        rasterResults: dict 
+            list of com1DFA results
+        Returns
+        -------
+        allRasterLayers: list
+            list of QGis raster layers with name and style
+
+    '''
+    from qgis.core import (QgsRasterLayer)
+
+    scriptDir = pathlib.Path(__file__).parent
+    qmls = dict()
+    qmls['ppr'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
+    qmls['pft'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
+    qmls['pfv'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
+    qmls['PR'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
+    qmls['FV'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
+    qmls['FT'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
+
+    allRasterLayers = list()
+    for index, row in rasterResults.iterrows():
+        rstLayer = QgsRasterLayer(str(row['files']), row['names'])
+        try:
+            rstLayer.loadNamedStyle(qmls[row['resType']])
+        except:
+            pass
+
+        allRasterLayers.append(rstLayer)
+
+    return allRasterLayers
+
+
+def addLayersToContext(context, layers, outTarget):
+    ''' add multiple layers to qgis context
+
+        Parameters
+        -----------
+        context: QGisProcessing context
+        layers: list
+            list of QGis layers to add
+        Returns
+        -------
+        context:
+            updated context
+    '''
+    from qgis.core import (QgsProcessingContext)
+
+    context.temporaryLayerStore().addMapLayers(layers)
+
+    for item in layers:
+        context.addLayerToLoadOnCompletion(
+            item.id(),
+            QgsProcessingContext.LayerDetails(item.name(),
+                                              context.project(),
+                                              outTarget))
+
+    return context
+
+def addSingleLayerToContext(context, layer, outTarget):
+    ''' add layer to qgis context
+
+        Parameters
+        -----------
+        context: QGisProcessing context
+        layer: Qgis layer
+            QGis layer to add
+        Returns
+        -------
+        context:
+            updated context
+    '''
+    from qgis.core import (QgsProcessingContext)
+
+    context.temporaryLayerStore().addMapLayer(layer)
+
+    context.addLayerToLoadOnCompletion(
+        layer.id(),
+        QgsProcessingContext.LayerDetails(layer.name(),
+                                          context.project(),
+                                          outTarget))
+
+    return context

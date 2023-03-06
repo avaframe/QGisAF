@@ -33,30 +33,23 @@ __revision__ = "$Format:%H$"
 
 import pandas
 import pathlib
+import subprocess
 from pathlib import Path
 
-pandas.set_option("display.max_colwidth", 10)
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
     QgsProcessing,
-    QgsVectorLayer,
-    QgsRasterLayer,
     QgsProcessingException,
     QgsProcessingAlgorithm,
-    QgsProcessingContext,
-    QgsProcessingParameterFeatureSource,
     QgsProcessingParameterRasterLayer,
     QgsProcessingParameterMultipleLayers,
     QgsProcessingParameterFolderDestination,
     QgsProcessingOutputVectorLayer,
-    QgsProcessingOutputMultipleLayers,
 )
 
-from qgis import processing
 
-
-class AvaFrameRunAna4ProbAlgorithm(QgsProcessingAlgorithm):
+class runAna4ProbAnaAlgorithm(QgsProcessingAlgorithm):
     """
     This is the AvaFrame Connection, i.e. the part running with QGis. For this
     connector to work, more installation is needed. See instructions at docs.avaframe.org
@@ -152,42 +145,43 @@ class AvaFrameRunAna4ProbAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo("Starting the simulations")
         feedback.pushInfo("This might take a while")
-        feedback.pushInfo("Open Plugins -> Python Console to see the progress")
+        feedback.pushInfo("See console for progress")
 
-        rasterResults = runPa.runProbAna(str(targetDir))
+        subprocess.call(['python', '-m', 'avaframe.runAna4ProbAna', str(targetDir)])
+        sys.exit()
 
-        feedback.pushInfo("Done, start loading the results")
+        # feedback.pushInfo("Done, start loading the results")
 
-        scriptDir = Path(__file__).parent
-        qmls = dict()
-        qmls["ppr"] = str(scriptDir / "QGisStyles" / "ppr.qml")
-        qmls["pft"] = str(scriptDir / "QGisStyles" / "pft.qml")
-        qmls["pfv"] = str(scriptDir / "QGisStyles" / "pfv.qml")
-        qmls["PR"] = str(scriptDir / "QGisStyles" / "ppr.qml")
-        qmls["FV"] = str(scriptDir / "QGisStyles" / "pfv.qml")
-        qmls["FT"] = str(scriptDir / "QGisStyles" / "pft.qml")
+        # scriptDir = Path(__file__).parent
+        # qmls = dict()
+        # qmls["ppr"] = str(scriptDir / "QGisStyles" / "ppr.qml")
+        # qmls["pft"] = str(scriptDir / "QGisStyles" / "pft.qml")
+        # qmls["pfv"] = str(scriptDir / "QGisStyles" / "pfv.qml")
+        # qmls["PR"] = str(scriptDir / "QGisStyles" / "ppr.qml")
+        # qmls["FV"] = str(scriptDir / "QGisStyles" / "pfv.qml")
+        # qmls["FT"] = str(scriptDir / "QGisStyles" / "pft.qml")
 
-        allRasterLayers = list()
-        for index, row in rasterResults.iterrows():
-            print(row["files"], row["resType"])
-            rstLayer = QgsRasterLayer(str(row["files"]), row["names"])
-            try:
-                rstLayer.loadNamedStyle(qmls[row["resType"]])
-            except:
-                feedback.pushInfo("No matching layer style found")
-                pass
+        # allRasterLayers = list()
+        # for index, row in rasterResults.iterrows():
+        #     print(row["files"], row["resType"])
+        #     rstLayer = QgsRasterLayer(str(row["files"]), row["names"])
+        #     try:
+        #         rstLayer.loadNamedStyle(qmls[row["resType"]])
+        #     except:
+        #         feedback.pushInfo("No matching layer style found")
+        #         pass
 
-            allRasterLayers.append(rstLayer)
+        #     allRasterLayers.append(rstLayer)
 
-        context.temporaryLayerStore().addMapLayers(allRasterLayers)
+        # context.temporaryLayerStore().addMapLayers(allRasterLayers)
 
-        for item in allRasterLayers:
-            context.addLayerToLoadOnCompletion(
-                item.id(),
-                QgsProcessingContext.LayerDetails(
-                    item.name(), context.project(), self.OUTPPR
-                ),
-            )
+        # for item in allRasterLayers:
+        #     context.addLayerToLoadOnCompletion(
+        #         item.id(),
+        #         QgsProcessingContext.LayerDetails(
+        #             item.name(), context.project(), self.OUTPPR
+        #         ),
+        #     )
 
         feedback.pushInfo("\n---------------------------------")
         feedback.pushInfo("Done, find results and logs here:")
@@ -247,4 +241,4 @@ class AvaFrameRunAna4ProbAlgorithm(QgsProcessingAlgorithm):
         return "https://docs.avaframe.org/en/latest/connector.html"
 
     def createInstance(self):
-        return AvaFrameRunAna4ProbRunAlgorithm()
+        return runAna4ProbAnaAlgorithm()
