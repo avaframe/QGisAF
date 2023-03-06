@@ -31,40 +31,21 @@ __copyright__ = '(C) 2022 by AvaFrame Team'
 __revision__ = '$Format:%H$'
 
 import shutil
-import pandas
 import pathlib
+import subprocess
 from pathlib import Path
-pandas.set_option('display.max_colwidth', 10)
-
-#qgis_process run AVAFRAME:AvaFrameConnector -- DEM=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/avaAlr.asc ENT FOLDEST=/home/felix/tmp/Out1 PROFILE=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/LINES/pathAB.shp REL=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/REL/relAlr12.shp RES= SPLITPOINTS=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/POINTS/splitPoint.sh
-
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
-                       QgsFeatureSink,
-                       QgsFeatureRequest,
-                       QgsVectorLayer,
-                       QgsProject,
-                       QgsRasterLayer,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
-                       QgsProcessingContext,
                        QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterString,
-                       QgsProcessingParameterBoolean,
                        QgsProcessingParameterRasterLayer,
-                       QgsProcessingParameterVectorLayer,
                        QgsProcessingParameterMultipleLayers,
-                       QgsProcessingParameterVectorDestination,
                        QgsProcessingParameterFolderDestination,
-                       QgsProcessingParameterRasterDestination,
-                       QgsProcessingLayerPostProcessorInterface,
                        QgsProcessingOutputVectorLayer,
-                       QgsProcessingOutputRasterLayer,
                        QgsProcessingOutputMultipleLayers,
-                       QgsProcessingParameterFeatureSink)
-from qgis import processing
-
+                       )
 
 
 class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
@@ -85,7 +66,6 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
     FOLDEST = 'FOLDEST'
     SMALLAVA = 'SMALLAVA'
 
-
     def initAlgorithm(self, config):
         """
         Here we define the inputs and output of the algorithm, along
@@ -96,11 +76,6 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             self.DEM,
             self.tr("DEM layer")))
 
-        #  self.addParameter(QgsProcessingParameterFeatureSource(
-               #  self.REL,
-               #  self.tr('Release layer'),
-               #  [QgsProcessing.TypeVectorAnyGeometry]
-           #  ))
         self.addParameter(QgsProcessingParameterMultipleLayers(
             self.REL,
             self.tr('Release layer(s)'),
@@ -167,7 +142,6 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                 self.OUTPPR,
             )
         )
-#
 
 
     def processAlgorithm(self, parameters, context, feedback):
@@ -176,9 +150,8 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         """
 
         from avaframe.in3Utils import initializeProject as iP
-        from avaframe import runOperational as runOp
         import avaframe.version as gv
-        from . import avaframeConnector_commonFunc as cF 
+        from . import avaframeConnector_commonFunc as cF
 
         feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
 
@@ -207,7 +180,6 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             srInfo = '_SR' + Path(sourceSecREL.source()).stem
             targetADDTONAME = targetADDTONAME + srInfo
 
-
         sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
 
         sourceRES = self.parameterAsVectorLayer(parameters, self.RES, context)
@@ -219,10 +191,9 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         sourceSPLITPOINTS= self.parameterAsVectorLayer(parameters, self.SPLITPOINTS, context)
 
         # create folder structure
-        targetDir = pathlib.Path(sourceFOLDEST)
-        iP.initializeFolderStruct(targetDir, removeExisting=False)
-
-        feedback.pushInfo(sourceDEM.source())
+        finalTargetDir = pathlib.Path(sourceFOLDEST)
+        targetDir = finalTargetDir / 'tmp'
+        iP.initializeFolderStruct(targetDir, removeExisting=True)
 
         # copy DEM
         cF.copyDEM(sourceDEM, targetDir)
@@ -268,85 +239,36 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo('Starting the simulations')
         feedback.pushInfo('This might take a while')
-        feedback.pushInfo('Open Plugins -> Python Console to see the progress')
+        feedback.pushInfo('See console for progress')
 
-        abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
+        # abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
+        subprocess.call(['python', '-m', 'avaframe.runOperational', str(targetDir)])
 
         feedback.pushInfo('Done, start loading the results')
 
-        if abResultsSource == 'None':
-            source = None
-            feedback.pushInfo('Alpha Beta was not run')
-        else:
-            feedback.pushInfo('Found ab source')
-            shpLayer = str(abResultsSource) + '.shp'
+        # Move input and output folders to finalTargetDir
 
-            source = QgsVectorLayer(shpLayer, "AlphaBeta", "ogr")
+        # Get peakfiles to return to QGIS
+        rasterResults = cF.getLatestPeak(targetDir)
 
-        scriptDir = Path(__file__).parent
-        qmls = dict()
-        qmls['ppr'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
-        qmls['pft'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
-        qmls['pfv'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
-        qmls['PR'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
-        qmls['FV'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
-        qmls['FT'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
+        allRasterLayers = cF.addStyleToCom1DFAResults(rasterResults)
 
-        allRasterLayers = list()
-        for index, row in rasterResults.iterrows():
-            print(row["files"], row["resType"])
-            rstLayer = QgsRasterLayer(str(row['files']), row['names'])
-            try:
-                rstLayer.loadNamedStyle(qmls[row['resType']])
-            except:
-                feedback.pushInfo('No matching layer style found')
-                pass
+        context = cF.addLayersToContext(context, allRasterLayers, self.OUTPPR)
 
-            allRasterLayers.append(rstLayer)
+        # Get alphabeta shapefile to return to QGIS
+        abResultsLayer = cF.getAlphaBetaResults(targetDir)
 
-        # should work, but doesn't...
-        # rstLayer.setName('ThisIsDaStuff')
-
-
-        # # Add SamosAT Group
-        # Root = QgsProject.instance().layerTreeRoot()
-
-        # # See if SamosAT group exists
-        # # if not, create
-        # SatGroup = Root.findGroup("com1DFA")
-        # if SatGroup:
-        #     feedback.pushDebugInfo('Found')
-        # else:
-        #     feedback.pushDebugInfo('Not Found')
-        #     SatGroup = Root.insertGroup(0, "com1DFA")
-
-        context.temporaryLayerStore().addMapLayers(allRasterLayers)
-
-        for item in allRasterLayers:
-            context.addLayerToLoadOnCompletion(
-                item.id(),
-                QgsProcessingContext.LayerDetails('raster layer',
-                                              context.project(),
-                                              self.OUTPPR))
-
-        if source is not None:
-            context.temporaryLayerStore().addMapLayer(source)
-            context.addLayerToLoadOnCompletion(
-                source.id(),
-                QgsProcessingContext.LayerDetails('OGR layer',
-                                                  context.project(),
-                                                  self.OUTPUT))
+        context = cF.addSingleLayerToContext(context, abResultsLayer, self.OUTPUT)
 
         feedback.pushInfo('\n---------------------------------')
         feedback.pushInfo('Done, find results and logs here:')
         feedback.pushInfo(str(targetDir.resolve()))
         feedback.pushInfo('---------------------------------\n')
 
-
-        if source is None:
+        if abResultsLayer is None:
             return {self.OUTPPR: allRasterLayers}
         else:
-            return {self.OUTPUT: source, self.OUTPPR: allRasterLayers}
+            return {self.OUTPUT: abResultsLayer, self.OUTPPR: allRasterLayers}
 
     def name(self):
         """

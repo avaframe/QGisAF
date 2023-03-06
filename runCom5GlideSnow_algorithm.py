@@ -31,22 +31,15 @@ __copyright__ = "(C) 2022 by AvaFrame Team"
 __revision__ = "$Format:%H$"
 
 
-import pandas
 import pathlib
 import subprocess
+from qgis import processing
 from pathlib import Path
-import pandas as pd
-from time import sleep
-
-pandas.set_option("display.max_colwidth", 10)
-MESSAGE_CATEGORY = 'TaskFromFunction'
-
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
     QgsProcessing,
     QgsVectorLayer,
-    QgsRasterLayer,
     QgsProcessingException,
     QgsProcessingAlgorithm,
     QgsProcessingContext,
@@ -57,11 +50,7 @@ from qgis.core import (
     QgsProcessingOutputVectorLayer,
     QgsProcessingOutputMultipleLayers,
     QgsProcessingContext,
-    Qgis,
-    QgsMessageLog,
 )
-
-from qgis import processing
 
 
 class runCom5GlideSnowAlgorithm(QgsProcessingAlgorithm):
@@ -129,47 +118,12 @@ class runCom5GlideSnowAlgorithm(QgsProcessingAlgorithm):
         return super().flags()
         # return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
 
-    def run(self, task, avaDir):
-        """Get all files of a shapefile"""
-        from avaframe import runCom5GlideSnow as runGs
-
-        QgsMessageLog.logMessage('Started task {}'.format(task.description()),
-                             MESSAGE_CATEGORY, Qgis.Info)
-        QgsMessageLog.logMessage('AvaDir {}'.format(avaDir), MESSAGE_CATEGORY, Qgis.Info)
-        rasterResults = runGs.runGlideSnow(avaDir)
-        QgsMessageLog.logMessage('DONE HERE', MESSAGE_CATEGORY, Qgis.Info)
-
-        return rasterResults
-
-    def completed(self, exception, result=None):
-        """this is called when run is finished. Exception is not None if run
-        raises an exception. Result is the return value of run."""
-        if exception is None:
-            if result is None:
-                QgsMessageLog.logMessage(
-                    'Completed with no exception and no result ' \
-                    '(probably the task was manually canceled by the user)',
-                    MESSAGE_CATEGORY, Qgis.Warning)
-            else:
-                QgsMessageLog.logMessage(
-                    'Task {name} completed\n',
-                    MESSAGE_CATEGORY, Qgis.Info)
-        else:
-            QgsMessageLog.logMessage("Exception: {}".format(exception),
-                                     MESSAGE_CATEGORY, Qgis.Critical)
-            raise exception
-
-
-
-
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
 
         from avaframe.in3Utils import initializeProject as iP
-        from avaframe.in3Utils import fileHandlerUtils as fU
-        from avaframe import runCom5GlideSnow as runGs
         import avaframe.version as gv
         from . import avaframeConnector_commonFunc as cF
 
@@ -210,67 +164,90 @@ class runCom5GlideSnowAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo("Starting the simulations")
         feedback.pushInfo("This might take a while")
-        feedback.pushInfo("A console should have opened")
+        feedback.pushInfo("See console for more info")
 
+        subprocess.call(['python', '-m', 'avaframe.runCom5GlideSnow', str(targetDir)])
 
-        # Original solution
-        # rasterResults = runGs.runGlideSnow(str(targetDir))
-
-        # This kinda works
-        # process = subprocess.Popen(['python', '-m', 'avaframe.runCom5GlideSnow', str(targetDir)], stdout=subprocess.PIPE, universal_newlines=True)
-        # while True:
-        #     output = process.stdout.readline()
-        #     # if output == '' and process.poll() is not None:
-        #     if len(output) == 0 and process.poll() is not None:  
-        #         break
-        #     if output:
-        #         print(output.strip())
-        # rc = process.poll()
-
-        output =  subprocess.run(['python', '-m', 'avaframe.runCom5GlideSnow', str(targetDir)])
+        feedback.pushInfo("Done, start loading the results")
 
         # Get peakfiles to return to QGIS
         rasterResults = cF.getLatestPeak(targetDir)
+        allRasterLayers = cF.addStyleToCom1DFAResults(rasterResults)
+        # context = cF.addLayersToContext(context, allRasterLayers, self.OUTPPR)
+
+        vectorResults = list()
+        # Iterate through all raster layers
+        for layer in allRasterLayers:
+
+            # Get layer crs
+            thisLayerCRS = layer.crs()
+
+            # Get source layer dir
+            cuLayerName = layer.name()
+            sourcePath = Path(layer.source())
+            sourceDir = sourcePath.parent
+            sourceFileName = sourcePath.stem
+
+            # Set new layer name
+            newLayerName = cuLayerName
+            newLayerPath = sourceDir.joinpath(sourceFileName+'.shp')
+
+            params = {'FIELD_NAME': 'VALUE',
+                      'INPUT_RASTER': layer,
+                      'OUTPUT': str(newLayerPath),
+                      'RASTER_BAND': 1}
+            result = processing.run("native:pixelstopolygons", params)
+
+            vectorResults.append({'file': result['OUTPUT'],
+                                  'name': newLayerName,
+                                  'crs': thisLayerCRS})
 
         feedback.pushInfo("Done, start loading the results")
 
         scriptDir = Path(__file__).parent
         qmls = dict()
-        qmls["ppr"] = str(scriptDir / "QGisStyles" / "ppr.qml")
-        qmls["pft"] = str(scriptDir / "QGisStyles" / "pft.qml")
-        qmls["pfv"] = str(scriptDir / "QGisStyles" / "pfv.qml")
-        qmls["PR"] = str(scriptDir / "QGisStyles" / "ppr.qml")
-        qmls["FV"] = str(scriptDir / "QGisStyles" / "pfv.qml")
-        qmls["FT"] = str(scriptDir / "QGisStyles" / "pft.qml")
+        qmls["ppr"] = str(scriptDir / "QGisStyles" / "pprGlideSnowShape.qml")
+        qmls["pft"] = str(scriptDir / "QGisStyles" / "pftGlideSnowShape.qml")
+        qmls["pfv"] = str(scriptDir / "QGisStyles" / "pfvGlideSnowShape.qml")
 
-        allRasterLayers = list()
-        for index, row in rasterResults.iterrows():
-            print(row["files"], row["resType"])
-            rstLayer = QgsRasterLayer(str(row["files"]), row["names"])
+        allVectorLayers = list()
+        for row in vectorResults:
+            vectorLayer = QgsVectorLayer(row["file"], row["name"], "ogr")
+            vectorLayer.setCrs(row["crs"])
+            vectorLayer.setName(row["name"])
             try:
-                rstLayer.loadNamedStyle(qmls[row["resType"]])
+                resType = row["name"].split('_')[-1]
+                vectorLayer.loadNamedStyle(qmls[resType])
             except:
                 feedback.pushInfo("No matching layer style found")
                 pass
 
-            allRasterLayers.append(rstLayer)
+            allVectorLayers.append(vectorLayer)
 
-        context.temporaryLayerStore().addMapLayers(allRasterLayers)
+        context.temporaryLayerStore().addMapLayers(allVectorLayers)
 
-        for item in allRasterLayers:
+        for item in allVectorLayers:
             context.addLayerToLoadOnCompletion(
                 item.id(),
                 QgsProcessingContext.LayerDetails(
-                    item.name(), context.project(), self.OUTPPR
+                    item.name(), context.project(), self.OUTPUT
                 ),
             )
 
-        feedback.pushInfo("\n---------------------------------")
-        feedback.pushInfo("Done, find results and logs here:")
-        feedback.pushInfo(str(targetDir.resolve()))
-        feedback.pushInfo("---------------------------------\n")
+        return {self.OUTPUT: allVectorLayers}
 
-        return {self.OUTPPR: allRasterLayers}
+
+
+        # allRasterLayers = cF.addStyleToCom1DFAResults(rasterResults)
+
+        # context = cF.addLayersToContext(context, allRasterLayers, self.OUTPPR)
+
+        # feedback.pushInfo("\n---------------------------------")
+        # feedback.pushInfo("Done, find results and logs here:")
+        # feedback.pushInfo(str(targetDir.resolve()))
+        # feedback.pushInfo("---------------------------------\n")
+
+        # return {self.OUTPPR: allRasterLayers}
 
     def name(self):
         """

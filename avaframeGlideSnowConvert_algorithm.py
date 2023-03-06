@@ -118,53 +118,39 @@ class AvaFrameGlideSnowConvertAlgorithm(QgsProcessingAlgorithm):
             sourceDir = sourcePath.parent
             sourceFileName = sourcePath.stem
 
-            print('Layer name:', layer.name())
-
             # Set new layer name
             newLayerName = cuLayerName
             newLayerPath = sourceDir.joinpath(sourceFileName+'.shp')
 
-            # fullOutput =  'ogr:dbname=\''+str(newLayerPath)+'\''
-            # fullOutput =  str(newLayerPath)+'?a_srs="EPSG:27700"'
-            # fullOutput =  'ogr:dbname=\''+str(newLayerPath)+'\' table=\"' + layer.name() + '\" (geom)'
+            params = {'FIELD_NAME': 'VALUE',
+                      'INPUT_RASTER': layer,
+                      'OUTPUT': str(newLayerPath),
+                      'RASTER_BAND': 1}
+            result = processing.run("native:pixelstopolygons", params)
 
-            params = {'BAND': 1, 'CREATE_3D': False,
-                      'EXTRA': '', 'FIELD_NAME': 'ELEV', 'IGNORE_NODATA': True,
-                      'INPUT': layer,
-                      'INTERVAL': 1, 'NODATA': None, 'OFFSET': 0.01,
-                      # 'OUTPUT': fullOutput}
-                      'OUTPUT': str(newLayerPath)}
-
-            result = processing.run("gdal:contour", params)
-
-            # print(result['OUTPUT'])
             vectorResults.append({'file': result['OUTPUT'],
                                   'name': newLayerName,
                                   'crs': thisLayerCRS})
 
         feedback.pushInfo("Done, start loading the results")
 
-        # scriptDir = Path(__file__).parent
-        # qmls = dict()
-        # qmls["ppr"] = str(scriptDir / "QGisStyles" / "ppr.qml")
-        # qmls["pft"] = str(scriptDir / "QGisStyles" / "pft.qml")
-        # qmls["pfv"] = str(scriptDir / "QGisStyles" / "pfv.qml")
-        # qmls["PR"] = str(scriptDir / "QGisStyles" / "ppr.qml")
-        # qmls["FV"] = str(scriptDir / "QGisStyles" / "pfv.qml")
-        # qmls["FT"] = str(scriptDir / "QGisStyles" / "pft.qml")
+        scriptDir = Path(__file__).parent
+        qmls = dict()
+        qmls["ppr"] = str(scriptDir / "QGisStyles" / "pprGlideSnowShape.qml")
+        qmls["pft"] = str(scriptDir / "QGisStyles" / "pftGlideSnowShape.qml")
+        qmls["pfv"] = str(scriptDir / "QGisStyles" / "pfvGlideSnowShape.qml")
 
         allVectorLayers = list()
         for row in vectorResults:
-            print(row["file"], row["name"])
             vectorLayer = QgsVectorLayer(row["file"], row["name"], "ogr")
             vectorLayer.setCrs(row["crs"])
             vectorLayer.setName(row["name"])
-        #     rstLayer = QgsRasterLayer(str(row["files"]), row["names"])
-        #     try:
-        #         rstLayer.loadNamedStyle(qmls[row["resType"]])
-        #     except:
-        #         feedback.pushInfo("No matching layer style found")
-        #         pass
+            try:
+                resType = row["name"].split('_')[-1]
+                vectorLayer.loadNamedStyle(qmls[resType])
+            except:
+                feedback.pushInfo("No matching layer style found")
+                pass
 
             allVectorLayers.append(vectorLayer)
 
@@ -177,11 +163,6 @@ class AvaFrameGlideSnowConvertAlgorithm(QgsProcessingAlgorithm):
                     item.name(), context.project(), self.OUTPUT
                 ),
             )
-
-        # feedback.pushInfo("\n---------------------------------")
-        # feedback.pushInfo("Done, find results and logs here:")
-        # feedback.pushInfo(str(targetDir.resolve()))
-        # feedback.pushInfo("---------------------------------\n")
 
         return {self.OUTPUT: allVectorLayers}
 

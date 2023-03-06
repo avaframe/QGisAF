@@ -31,33 +31,23 @@ __copyright__ = '(C) 2022 by AvaFrame Team'
 __revision__ = '$Format:%H$'
 
 
-import pandas
 import pathlib
 import subprocess
+import shutil
 from pathlib import Path
-pandas.set_option('display.max_colwidth', 10)
-
-#qgis_process run AVAFRAME:AvaFrameRunCom1DFA -- DEM=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/avaAlr.asc ENT FOLDEST=/home/felix/tmp/Out1 PROFILE=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/LINES/pathAB.shp REL=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/REL/relAlr12.shp RES= SPLITPOINTS=/home/felix/tmp/WebinarAvaFrameExample/avaAlr/Inputs/POINTS/splitPoint.sh
-
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
-                       QgsVectorLayer,
                        QgsRasterLayer,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
                        QgsProcessingContext,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterRasterLayer,
-                       QgsProcessingParameterString,
                        QgsProcessingParameterMultipleLayers,
                        QgsProcessingParameterFolderDestination,
                        QgsProcessingOutputVectorLayer,
-                       QgsProject,
-                       QgsLayerTreeLayer,
                        QgsProcessingOutputMultipleLayers)
-
-from qgis import processing
 
 
 class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
@@ -151,10 +141,8 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         """
 
         from avaframe.in3Utils import initializeProject as iP
-        from avaframe import runOperational as runOp
-        from avaframe.in3Utils import fileHandlerUtils as fU
         import avaframe.version as gv
-        from . import avaframeConnector_commonFunc as cF 
+        from . import avaframeConnector_commonFunc as cF
 
         feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
 
@@ -187,8 +175,13 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
 
         # create folder structure
-        targetDir = pathlib.Path(sourceFOLDEST)
-        iP.initializeFolderStruct(targetDir, removeExisting=False)
+        finalTargetDir = pathlib.Path(sourceFOLDEST)
+        targetDir = finalTargetDir / 'tmp'
+        iP.initializeFolderStruct(targetDir, removeExisting=True)
+
+        finalOutputs = finalTargetDir / 'Outputs'
+        if finalOutputs.is_dir():
+            shutil.copytree(finalOutputs , targetDir / 'Outputs', dirs_exist_ok=True)
 
         feedback.pushInfo(sourceDEM.source())
 
@@ -212,60 +205,26 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo('Starting the simulations')
         feedback.pushInfo('This might take a while')
-        feedback.pushInfo('Open Plugins -> Python Console to see the progress')
+        feedback.pushInfo('See console for progress')
 
         subprocess.call(['python', '-m', 'avaframe.runOperational', str(targetDir)])
 
-        # Get peakfiles to return to QGIS
-        rasterResults = cF.getLatestPeak(targetDir)
-
         feedback.pushInfo('Done, start loading the results')
 
-        scriptDir = Path(__file__).parent
-        qmls = dict()
-        qmls['ppr'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
-        qmls['pft'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
-        qmls['pfv'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
-        qmls['PR'] = str(scriptDir / 'QGisStyles' / 'ppr.qml')
-        qmls['FV'] = str(scriptDir / 'QGisStyles' / 'pfv.qml')
-        qmls['FT'] = str(scriptDir / 'QGisStyles' / 'pft.qml')
+        # Move input and output folders to finalTargetDir
+        shutil.copytree(targetDir / 'Outputs', finalTargetDir / 'Outputs', dirs_exist_ok=True)
+        shutil.rmtree(targetDir / 'Outputs')
+        shutil.copytree(targetDir / 'Inputs', finalTargetDir / 'Inputs', dirs_exist_ok=True)
+        shutil.rmtree(targetDir / 'Inputs')
+        logFile = list(targetDir.glob('*.log'))
+        shutil.move(logFile[0], finalTargetDir)
 
-        allRasterLayers = list()
-        for index, row in rasterResults.iterrows():
-            print(row["files"], row["resType"], row["names"])
-            rstLayer = QgsRasterLayer(str(row['files']), row['names'])
-            try:
-                rstLayer.loadNamedStyle(qmls[row['resType']])
-            except:
-                feedback.pushInfo('No matching layer style found')
-                pass
+        # Get peakfiles to return to QGIS
+        rasterResults = cF.getLatestPeak(finalTargetDir)
 
-            allRasterLayers.append(rstLayer)
+        allRasterLayers = cF.addStyleToCom1DFAResults(rasterResults)
 
-
-        # # Add Group
-        # Root = QgsProject.instance().layerTreeRoot()
-
-        # # # See if SamosAT group exists
-        # # # if not, create
-        # myGroup = Root.findGroup(targetGROUPDEST)
-        # if myGroup:
-        #     feedback.pushDebugInfo('Found')
-        # else:
-        #     feedback.pushDebugInfo('Not Found')
-        #     myGroup = Root.insertGroup(0, targetGROUPDEST)
-
-        context.temporaryLayerStore().addMapLayers(allRasterLayers)
-
-        for item in allRasterLayers:
-            # QgsProject.instance().addMapLayer(item, False) # False so that it doesn't get inserted at default position
-            # context.temporaryLayerStore().addMapLayer(item)
-            context.addLayerToLoadOnCompletion(
-                item.id(),
-                QgsProcessingContext.LayerDetails(item.name(),
-                                              context.project(),
-                                              self.OUTPPR))
-            # myGroup.insertChildNode(1, QgsLayerTreeLayer(item))
+        context = cF.addLayersToContext(context, allRasterLayers, self.OUTPPR)
 
         feedback.pushInfo('\n---------------------------------')
         feedback.pushInfo('Done, find results and logs here:')
