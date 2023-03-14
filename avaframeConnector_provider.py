@@ -123,7 +123,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         self.addAlgorithm(layerRenameAlgorithm())
         self.addAlgorithm(runCom1DFAAlgorithm())
         self.addAlgorithm(runCom5GlideSnowAlgorithm())
-        # self.addAlgorithm(runAna4ProbAnaAlgorithm())
+        self.addAlgorithm(runAna4ProbAnaAlgorithm())
         self.addAlgorithm(getVersionAlgorithm())
         self.addAlgorithm(updateAlgorithm())
 

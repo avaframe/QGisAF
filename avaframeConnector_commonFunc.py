@@ -2,6 +2,7 @@
 import pathlib
 import shutil
 import pandas as pd
+import sys
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 
@@ -132,12 +133,44 @@ def getAlphaBetaResults(targetDir):
         return 'None'
 
 
+def getAna4ProbAnaResults(targetDir):
+    '''Get results of ana4PropAna
+
+        Parameters
+        -----------
+        targetDir: pathlib path
+            to avalanche directory
+        Returns
+        -------
+
+    '''
+    from qgis.core import (QgsRasterLayer)
+    avaDir = pathlib.Path(str(targetDir))
+    ana4ResultsDir = avaDir / 'Outputs' / 'ana4Stats'
+
+    globbed = ana4ResultsDir.glob(avaDir.stem + '*.asc')
+    scriptDir = pathlib.Path(__file__).parent
+    qml = str(scriptDir / 'QGisStyles' / 'probMap.qml')
+
+    allRasterLayers = list()
+    for item in globbed:
+        rstLayer = QgsRasterLayer(str(item), item.stem)
+        try:
+            rstLayer.loadNamedStyle(qml)
+        except:
+            pass
+
+        allRasterLayers.append(rstLayer)
+
+    return allRasterLayers
+
+
 def addStyleToCom1DFAResults(rasterResults):
     ''' add QML Style to com1DFA raster results
 
         Parameters
         -----------
-        rasterResults: dict 
+        rasterResults: dict
             list of com1DFA results
         Returns
         -------
@@ -194,6 +227,7 @@ def addLayersToContext(context, layers, outTarget):
                                               outTarget))
 
     return context
+
 
 def addSingleLayerToContext(context, layer, outTarget):
     ''' add layer to qgis context

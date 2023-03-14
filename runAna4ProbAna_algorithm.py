@@ -140,9 +140,12 @@ class runAna4ProbAnaAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo("See console for progress")
 
         subprocess.call(['python', '-m', 'avaframe.runAna4ProbAna', str(targetDir)])
-        sys.exit()
 
-        # feedback.pushInfo("Done, start loading the results")
+        feedback.pushInfo("Done, start loading the results")
+        
+        rasterResults = cF.getAna4ProbAnaResults(targetDir)
+        
+        context = cF.addLayersToContext(context, rasterResults, self.OUTPUT)
 
         # scriptDir = Path(__file__).parent
         # qmls = dict()
@@ -180,7 +183,7 @@ class runAna4ProbAnaAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo(str(targetDir.resolve()))
         feedback.pushInfo("---------------------------------\n")
 
-        return {self.OUTPPR: allRasterLayers}
+        return {self.OUTPUT: rasterResults}
 
     def name(self):
         """
