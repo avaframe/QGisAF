@@ -6,7 +6,7 @@
 name=AvaFrameConnector
 qgisMinimumVersion=3.18
 description=Connects to AvaFrame
-version=1.3
+version=1.5
 author=AvaFrame Team
 email=felix@avaframe.org
 
@@ -24,7 +24,8 @@ repository=https://github.com/avaframe/QGisAF
 
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
-changelog= 1.3 Add secondary release, rename and update functions, 
+changelog= 1.5 Parallel execution and glide snow experimental
+    1.3 Add secondary release, rename and update functions, 
     automatic AvaFrame python package installation
     1.1 Follow variable renaming of AvaFrame
 
