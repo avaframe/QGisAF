@@ -96,14 +96,6 @@ class runAna4ProbAnaAlgorithm(QgsProcessingAlgorithm):
         return super().flags()
         # return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
 
-    def getSHPParts(self, base):
-        """Get all files of a shapefile"""
-
-        globBase = base.parent
-        globbed = globBase.glob(base.stem + ".*")
-
-        return globbed
-
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
