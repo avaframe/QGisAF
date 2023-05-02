@@ -35,11 +35,8 @@ import os.path
 import subprocess
 import os
 import inspect
-from qgis.core import Qgis
 from qgis.core import QgsProcessingProvider
-from qgis.core import QgsProcessingFeedback
 from qgis.PyQt.QtGui import QIcon
-from pathlib import Path
 
 from qgis.core import (
     QgsMessageLog,
@@ -94,6 +91,7 @@ from .getVersion_algorithm import getVersionAlgorithm
 from .runCom1DFA_algorithm import runCom1DFAAlgorithm
 from .runCom5GlideSnow_algorithm import runCom5GlideSnowAlgorithm
 from .runAna4ProbAna_algorithm import runAna4ProbAnaAlgorithm
+from .runIn1RelInfo_algorithm import runIn1RelInfoAlgorithm
 from .update_algorithm import updateAlgorithm
 
 
@@ -126,6 +124,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         self.addAlgorithm(runAna4ProbAnaAlgorithm())
         self.addAlgorithm(getVersionAlgorithm())
         self.addAlgorithm(updateAlgorithm())
+        self.addAlgorithm(runIn1RelInfoAlgorithm())
 
     def id(self):
         """
