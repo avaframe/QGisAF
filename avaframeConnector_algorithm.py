@@ -192,7 +192,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
 
         # create folder structure
         finalTargetDir = pathlib.Path(sourceFOLDEST)
-        targetDir = finalTargetDir / 'tmp'
+        targetDir = finalTargetDir 
         iP.initializeFolderStruct(targetDir, removeExisting=True)
 
         # copy DEM

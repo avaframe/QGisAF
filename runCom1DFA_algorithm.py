@@ -58,6 +58,7 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
     DEM = 'DEM'
     REL = 'REL'
+    RELTH = 'RELTH'
     SECREL = 'SECREL'
     ENT = 'ENT'
     RES = 'RES'
@@ -83,6 +84,10 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
             self.tr('Release layer(s)'),
             layerType=QgsProcessing.TypeVectorAnyGeometry
             ))
+        
+        # self.addParameter(QgsProcessingParameterRasterLayer(
+        #     self.RELTH,
+        #     self.tr("Release thickness layer")))
 
         # self.addParameter(QgsProcessingParameterString(
         #         self.ADDTONAME,
@@ -153,6 +158,8 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         if sourceDEM is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
 
+        # sourceRELTH = self.parameterAsRasterLayer(parameters, self.RELTH, context)
+
         # Release files
         allREL = self.parameterAsLayerList(parameters, self.REL, context)
         if allREL is None:
@@ -194,6 +201,10 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         # copy all secondary release shapefile parts
         if sourceSecREL is not None:
             cF.copyShp(sourceSecREL.source(), targetDir / 'Inputs' / 'SECREL')
+        
+
+        # if sourceRELTH is not None:
+        #     cF.copyShp(sourceRELTH.source(), targetDir / 'Inputs' / 'RELTH')
 
         # copy all entrainment shapefile parts
         if sourceENT is not None:
