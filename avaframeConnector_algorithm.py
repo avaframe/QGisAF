@@ -177,7 +177,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         # Secondary release files
         sourceSecREL = self.parameterAsVectorLayer(parameters, self.SECREL, context)
         if sourceSecREL is not None:
-            srInfo = '_SR' + Path(sourceSecREL.source()).stem
+            srInfo = '_sec' + Path(sourceSecREL.source()).stem
             targetADDTONAME = targetADDTONAME + srInfo
 
         sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
