@@ -89,7 +89,7 @@ from .avaframeConnector_algorithm import AvaFrameConnectorAlgorithm
 from .layerRename_algorithm import layerRenameAlgorithm
 from .getVersion_algorithm import getVersionAlgorithm
 from .runCom1DFA_algorithm import runCom1DFAAlgorithm
-from .runCom5GlideSnow_algorithm import runCom5GlideSnowAlgorithm
+from .runCom5SnowSlide_algorithm import runCom5SnowSlideAlgorithm
 from .runAna4ProbAna_algorithm import runAna4ProbAnaAlgorithm
 from .runIn1RelInfo_algorithm import runIn1RelInfoAlgorithm
 from .update_algorithm import updateAlgorithm
@@ -120,7 +120,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         self.addAlgorithm(AvaFrameConnectorAlgorithm())
         self.addAlgorithm(layerRenameAlgorithm())
         self.addAlgorithm(runCom1DFAAlgorithm())
-        self.addAlgorithm(runCom5GlideSnowAlgorithm())
+        self.addAlgorithm(runCom5SnowSlideAlgorithm())
         self.addAlgorithm(runAna4ProbAnaAlgorithm())
         self.addAlgorithm(getVersionAlgorithm())
         self.addAlgorithm(updateAlgorithm())
