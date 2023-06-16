@@ -193,6 +193,7 @@ class runAna4ProbAnaAlgorithm(QgsProcessingAlgorithm):
 
     def shortHelpString(self) -> str:
         hstring = "Runs probability simulations via module com1DFA. \n\
+                The release shape HAS TO HAVE a ci95 field containing the 95 percentile confidence interval \n\
                 For more information go to (or use the help button below): \n\
                 AvaFrame Documentation: https://docs.avaframe.org\n\
                 Homepage: https://avaframe.org\n\
