@@ -137,10 +137,6 @@ class runIn1RelInfoAlgorithm(QgsProcessingAlgorithm):
 
         subprocess.call(['python', '-m', 'avaframe.runIn1RelInfo', str(targetDir)])
 
-        # feedback.pushInfo("Done, start loading the results")
-
-        # context = cF.addLayersToContext(context, rasterResults, self.OUTPUT)
-
         resDir = targetDir / "Outputs" / "com1DFA" / "releaseInfoFile"
 
         feedback.pushInfo("\n---------------------------------")
