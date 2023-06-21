@@ -38,16 +38,13 @@ from pathlib import Path
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
-                       QgsRasterLayer,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
-                       QgsProcessingContext,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterRasterLayer,
-                       QgsProcessingParameterMultipleLayers,
                        QgsProcessingParameterFolderDestination,
                        QgsProcessingOutputVectorLayer,
-                       QgsProcessingOutputMultipleLayers)
+                       )
 
 
 class runCom2ABAlgorithm(QgsProcessingAlgorithm):
@@ -126,14 +123,8 @@ class runCom2ABAlgorithm(QgsProcessingAlgorithm):
 
         sourceSPLITPOINTS = self.parameterAsVectorLayer(parameters, self.SPLITPOINTS, context)
 
-        # create folder structure
-        finalTargetDir = pathlib.Path(sourceFOLDEST)
-        targetDir = finalTargetDir / 'tmp'
-        iP.initializeFolderStruct(targetDir, removeExisting=True)
-
-        finalOutputs = finalTargetDir / 'Outputs'
-        if finalOutputs.is_dir():
-            shutil.copytree(finalOutputs, targetDir / 'Outputs', dirs_exist_ok=True)
+        # create folder structure (targetDir is the tmp one)
+        finalTargetDir, targetDir = cF.createFolderStructure(sourceFOLDEST)
 
         feedback.pushInfo(sourceDEM.source())
 
@@ -170,16 +161,14 @@ class runCom2ABAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo('Done, start loading the results')
 
-        # Move input and output folders to finalTargetDir
-        shutil.copytree(targetDir / 'Outputs', finalTargetDir / 'Outputs', dirs_exist_ok=True)
-        shutil.rmtree(targetDir / 'Outputs')
-        shutil.copytree(targetDir / 'Inputs', finalTargetDir / 'Inputs', dirs_exist_ok=True)
-        shutil.rmtree(targetDir / 'Inputs')
-        logFile = list(targetDir.glob('*.log'))
-        shutil.move(logFile[0], finalTargetDir)
+        # Move input, log and output folders to finalTargetDir
+        cF.moveInputAndOutputFoldersToFinal(targetDir, finalTargetDir)
 
         # Get alphabeta shapefile to return to QGIS
-        abResultsLayer = cF.getAlphaBetaResults(finalTargetDir)
+        try:
+            abResultsLayer = cF.getAlphaBetaResults(finalTargetDir)
+        except:
+            raise QgsProcessingException(self.tr('Something went wrong with com2AB, please check log files'))
 
         context = cF.addSingleLayerToContext(context, abResultsLayer, self.OUTPUT)
 

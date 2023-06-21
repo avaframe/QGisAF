@@ -4,6 +4,7 @@ import shutil
 import pandas as pd
 import sys
 from avaframe.in3Utils import fileHandlerUtils as fU
+from avaframe.in3Utils import initializeProject as iP
 
 
 
@@ -253,3 +254,54 @@ def addSingleLayerToContext(context, layer, outTarget):
                                           outTarget))
 
     return context
+
+
+def moveInputAndOutputFoldersToFinal(targetDir, finalTargetDir):
+    ''' Move input and output folders to finalTargetDir
+
+        Parameters
+        -----------
+        finalTargetDir: path
+            The directory in which the final results will end up
+        targetDir: path
+            The same, but with /tmp added 
+        Returns
+        -------
+    '''
+    shutil.copytree(targetDir / 'Outputs', finalTargetDir / 'Outputs', dirs_exist_ok=True)
+    shutil.rmtree(targetDir / 'Outputs')
+    shutil.copytree(targetDir / 'Inputs', finalTargetDir / 'Inputs', dirs_exist_ok=True)
+    shutil.rmtree(targetDir / 'Inputs')
+    logFile = list(targetDir.glob('*.log'))
+    shutil.move(logFile[0], finalTargetDir)
+
+    # remove tmp directory
+    shutil.rmtree(targetDir)
+
+    return 'Success'
+
+def createFolderStructure(foldDest):
+    ''' create (tmp) folder structure
+
+        Parameters
+        -----------
+        foldDest: path/str
+            Destination folder
+        Returns
+        -------
+        finalTargetDir: path
+            The directory in which the final results will end up
+        targetDir: path
+            The same, but with /tmp added
+    '''
+
+    finalTargetDir = pathlib.Path(foldDest)
+    targetDir = finalTargetDir / 'tmp'
+
+    iP.initializeFolderStruct(targetDir, removeExisting=True)
+
+    finalOutputs = finalTargetDir / 'Outputs'
+    if finalOutputs.is_dir():
+        shutil.copytree(finalOutputs, targetDir / 'Outputs', dirs_exist_ok=True)
+
+    return(finalTargetDir, targetDir)
