@@ -181,14 +181,8 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
 
-        # create folder structure
-        finalTargetDir = pathlib.Path(sourceFOLDEST)
-        targetDir = finalTargetDir / 'tmp'
-        iP.initializeFolderStruct(targetDir, removeExisting=True)
-
-        finalOutputs = finalTargetDir / 'Outputs'
-        if finalOutputs.is_dir():
-            shutil.copytree(finalOutputs , targetDir / 'Outputs', dirs_exist_ok=True)
+        # create folder structure (targetDir is the tmp one)
+        finalTargetDir, targetDir = cF.createFolderStructure(sourceFOLDEST)
 
         feedback.pushInfo(sourceDEM.source())
 
@@ -222,16 +216,14 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo('Done, start loading the results')
 
-        # Move input and output folders to finalTargetDir
-        shutil.copytree(targetDir / 'Outputs', finalTargetDir / 'Outputs', dirs_exist_ok=True)
-        shutil.rmtree(targetDir / 'Outputs')
-        shutil.copytree(targetDir / 'Inputs', finalTargetDir / 'Inputs', dirs_exist_ok=True)
-        shutil.rmtree(targetDir / 'Inputs')
-        logFile = list(targetDir.glob('*.log'))
-        shutil.move(logFile[0], finalTargetDir)
+        # Move input, log and output folders to finalTargetDir
+        cF.moveInputAndOutputFoldersToFinal(targetDir, finalTargetDir)
 
         # Get peakfiles to return to QGIS
-        rasterResults = cF.getLatestPeak(finalTargetDir)
+        try:
+            rasterResults = cF.getLatestPeak(finalTargetDir)
+        except:
+            raise QgsProcessingException(self.tr('Something went wrong with com1DFA, please check log files'))
 
         allRasterLayers = cF.addStyleToCom1DFAResults(rasterResults)
 
