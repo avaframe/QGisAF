@@ -44,9 +44,11 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingContext,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterRasterLayer,
+                       QgsProcessingParameterEnum,
                        QgsProcessingParameterMultipleLayers,
                        QgsProcessingParameterFolderDestination,
                        QgsProcessingOutputVectorLayer,
+                       QgsProcessingParameterDefinition,
                        QgsProcessingOutputMultipleLayers)
 
 
@@ -62,11 +64,13 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
     SECREL = 'SECREL'
     ENT = 'ENT'
     RES = 'RES'
+    FRICTSIZE = 'FRICTSIZE'
     OUTPUT = 'OUTPUT'
     OUTPPR = 'OUTPPR'
     FOLDEST = 'FOLDEST'
     ADDTONAME = "ADDTONAME"
     SMALLAVA = 'SMALLAVA'
+    DATA_TYPE = 'DATA_TYPE'
 
 
     def initAlgorithm(self, config):
@@ -121,6 +125,22 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
                 types=[QgsProcessing.TypeVectorAnyGeometry]
             ))
 
+        self.addParameter(QgsProcessingParameterEnum(
+                self.FRICTSIZE,
+                self.tr('Avalanche size'),
+                options=[self.tr('Large;'),
+                         self.tr('Medium; 25.000m3 < Release < 60.000m3'),
+                         self.tr('Small; Release < 25.000m3')],
+                defaultValue=0,
+                allowMultiple=False
+            ))
+
+        # dataType_param = QgsProcessingParameterEnum(self.DATA_TYPE,
+        #                                             self.tr('Output data type'),
+        #                                             allowMultiple=False,
+        #                                             defaultValue=0)
+        # dataType_param.setFlags(dataType_param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        # self.addParameter(dataType_param)
 
         self.addParameter(QgsProcessingParameterFolderDestination(
                 self.FOLDEST,

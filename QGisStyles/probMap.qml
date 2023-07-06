@@ -1,18 +1,18 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis version="3.30.2-'s-Hertogenbosch" styleCategories="AllStyleCategories" hasScaleBasedVisibilityFlag="0" maxScale="0" minScale="1e+08">
+<qgis minScale="1e+08" styleCategories="AllStyleCategories" hasScaleBasedVisibilityFlag="0" version="3.30.2-'s-Hertogenbosch" maxScale="0">
   <flags>
     <Identifiable>1</Identifiable>
     <Removable>1</Removable>
     <Searchable>1</Searchable>
     <Private>0</Private>
   </flags>
-  <temporal fetchMode="0" enabled="0" mode="0">
+  <temporal enabled="0" fetchMode="0" mode="0">
     <fixedRange>
       <start></start>
       <end></end>
     </fixedRange>
   </temporal>
-  <elevation zscale="1" zoffset="0" enabled="0" symbology="Line" band="1">
+  <elevation enabled="0" zscale="1" band="1" zoffset="0" symbology="Line">
     <data-defined-properties>
       <Option type="Map">
         <Option name="name" value="" type="QString"/>
@@ -21,7 +21,7 @@
       </Option>
     </data-defined-properties>
     <profileLineSymbol>
-      <symbol name="" force_rhr="0" clip_to_extent="1" is_animated="0" alpha="1" type="line" frame_rate="10">
+      <symbol name="" force_rhr="0" clip_to_extent="1" type="line" is_animated="0" frame_rate="10" alpha="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" value="" type="QString"/>
@@ -29,7 +29,7 @@
             <Option name="type" value="collection" type="QString"/>
           </Option>
         </data_defined_properties>
-        <layer pass="0" class="SimpleLine" id="{3695ee65-a836-456e-a1fb-86b3b4e5f753}" locked="0" enabled="1">
+        <layer enabled="1" id="{3695ee65-a836-456e-a1fb-86b3b4e5f753}" class="SimpleLine" locked="0" pass="0">
           <Option type="Map">
             <Option name="align_dash_pattern" value="0" type="QString"/>
             <Option name="capstyle" value="square" type="QString"/>
@@ -70,7 +70,7 @@
       </symbol>
     </profileLineSymbol>
     <profileFillSymbol>
-      <symbol name="" force_rhr="0" clip_to_extent="1" is_animated="0" alpha="1" type="fill" frame_rate="10">
+      <symbol name="" force_rhr="0" clip_to_extent="1" type="fill" is_animated="0" frame_rate="10" alpha="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" value="" type="QString"/>
@@ -78,7 +78,7 @@
             <Option name="type" value="collection" type="QString"/>
           </Option>
         </data_defined_properties>
-        <layer pass="0" class="SimpleFill" id="{d0e497d4-d8cd-42d8-8315-77801e4b770a}" locked="0" enabled="1">
+        <layer enabled="1" id="{d0e497d4-d8cd-42d8-8315-77801e4b770a}" class="SimpleFill" locked="0" pass="0">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
             <Option name="color" value="164,113,88,255" type="QString"/>
@@ -121,9 +121,9 @@
   </pipe-data-defined-properties>
   <pipe>
     <provider>
-      <resampling zoomedOutResamplingMethod="nearestNeighbour" maxOversampling="2" zoomedInResamplingMethod="nearestNeighbour" enabled="false"/>
+      <resampling zoomedOutResamplingMethod="nearestNeighbour" enabled="false" maxOversampling="2" zoomedInResamplingMethod="nearestNeighbour"/>
     </provider>
-    <rasterrenderer opacity="1" classificationMin="0" alphaBand="-1" nodataColor="" classificationMax="1" type="singlebandpseudocolor" band="1">
+    <rasterrenderer classificationMin="0" alphaBand="-1" type="singlebandpseudocolor" band="1" classificationMax="1" nodataColor="" opacity="1">
       <rasterTransparency/>
       <minMaxOrigin>
         <limits>MinMax</limits>
@@ -134,7 +134,7 @@
         <stdDevFactor>2</stdDevFactor>
       </minMaxOrigin>
       <rastershader>
-        <colorrampshader clip="0" labelPrecision="2" colorRampType="DISCRETE" maximumValue="1" minimumValue="0" classificationMode="2">
+        <colorrampshader labelPrecision="2" colorRampType="DISCRETE" clip="0" classificationMode="2" maximumValue="1" minimumValue="0">
           <colorramp name="[source]" type="gradient">
             <Option type="Map">
               <Option name="color1" value="254,242,243,0" type="QString"/>
@@ -146,13 +146,13 @@
               <Option name="stops" value="0.01;254,242,243,0;rgb;ccw:0.1;200,186,166,255;rgb;ccw:0.25;127,153,158,255;rgb;ccw:0.5;73,117,157,255;rgb;ccw:0.75;41,69,137,255;rgb;ccw" type="QString"/>
             </Option>
           </colorramp>
-          <item label="&lt;= 0.01" color="#fef2f3" value="0.01" alpha="0"/>
-          <item label="0.01 - 0.10" color="#c8baa6" value="0.1" alpha="255"/>
-          <item label=">0.10 - 0.25" color="#7f999e" value="0.25" alpha="255"/>
-          <item label=">0.25 - 0.50" color="#49759d" value="0.5" alpha="255"/>
-          <item label=">0.50 - 0.75" color="#294589" value="0.75" alpha="255"/>
-          <item label="> 0.75" color="#1a0c64" value="inf" alpha="255"/>
-          <rampLegendSettings prefix="" orientation="2" useContinuousLegend="1" direction="0" suffix="" maximumLabel="" minimumLabel="">
+          <item value="0.01" label="&lt;= 1%" color="#fef2f3" alpha="0"/>
+          <item value="0.1" label="1% &lt;= 10%" color="#c8baa6" alpha="255"/>
+          <item value="0.25" label=">10% &lt;= 25%" color="#7f999e" alpha="255"/>
+          <item value="0.5" label=">25% &lt;= 50%" color="#49759d" alpha="255"/>
+          <item value="0.75" label=">50% &lt;= 75%" color="#294589" alpha="255"/>
+          <item value="inf" label="> 75%" color="#1a0c64" alpha="255"/>
+          <rampLegendSettings direction="0" useContinuousLegend="1" minimumLabel="" prefix="" orientation="2" maximumLabel="" suffix="">
             <numericFormat id="basic">
               <Option type="Map">
                 <Option name="decimal_separator" type="invalid"/>
@@ -168,8 +168,8 @@
         </colorrampshader>
       </rastershader>
     </rasterrenderer>
-    <brightnesscontrast brightness="0" gamma="1" contrast="0"/>
-    <huesaturation colorizeGreen="128" colorizeOn="0" invertColors="0" colorizeRed="255" grayscaleMode="0" saturation="0" colorizeBlue="128" colorizeStrength="100"/>
+    <brightnesscontrast gamma="1" contrast="0" brightness="0"/>
+    <huesaturation grayscaleMode="0" colorizeGreen="128" invertColors="0" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeStrength="100" colorizeOn="0"/>
     <rasterresampler maxOversampling="2"/>
     <resamplingStage>resamplingFilter</resamplingStage>
   </pipe>
