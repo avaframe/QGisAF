@@ -128,8 +128,9 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterEnum(
                 self.FRICTSIZE,
                 self.tr('Avalanche size'),
-                options=[self.tr('Large;'),
-                         self.tr('Medium; 25.000m3 < Release < 60.000m3'),
+                options=[self.tr('Default (auto)'),
+                         self.tr('Large; Release >= 60.000m3'),
+                         self.tr('Medium; 25.000m3 <= Release < 60.000m3'),
                          self.tr('Small; Release < 25.000m3')],
                 defaultValue=0,
                 allowMultiple=False
@@ -152,7 +153,7 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
             self.tr("Output layer"),
             QgsProcessing.TypeVectorAnyGeometry))
 
-        self.addOutput( QgsProcessingOutputMultipleLayers(
+        self.addOutput(QgsProcessingOutputMultipleLayers(
                 self.OUTPPR,
             ))
 
@@ -201,6 +202,11 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
 
+        # get the friction size
+        frictSIZE = self.parameterAsInt(parameters, self.FRICTSIZE, context)
+        frictOptions = ['auto', 'large', 'medium', 'small']
+        frictString = frictOptions[frictSIZE]
+
         # create folder structure (targetDir is the tmp one)
         finalTargetDir, targetDir = cF.createFolderStructure(sourceFOLDEST)
 
@@ -232,7 +238,7 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo('This might take a while')
         feedback.pushInfo('See console for progress')
 
-        subprocess.call(['python', '-m', 'avaframe.runCom1DFA', str(targetDir)])
+        subprocess.call(['python', '-m', 'avaframe.runCom1DFA', str(targetDir), '-fc', str(frictString)])
 
         feedback.pushInfo('Done, start loading the results')
 
