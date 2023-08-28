@@ -131,7 +131,9 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
                 options=[self.tr('Default (auto)'),
                          self.tr('Large; Release >= 60.000m3'),
                          self.tr('Medium; 25.000m3 <= Release < 60.000m3'),
-                         self.tr('Small; Release < 25.000m3')],
+                         self.tr('Small; Release < 25.000m3'),
+                         self.tr('Use setting from cfg.ini')
+                         ],
                 defaultValue=0,
                 allowMultiple=False
             ))
@@ -204,7 +206,7 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         # get the friction size
         frictSIZE = self.parameterAsInt(parameters, self.FRICTSIZE, context)
-        frictOptions = ['auto', 'large', 'medium', 'small']
+        frictOptions = ['auto', 'large', 'medium', 'small', 'ini']
         frictString = frictOptions[frictSIZE]
 
         # create folder structure (targetDir is the tmp one)
