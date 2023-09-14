@@ -22,20 +22,20 @@
  ***************************************************************************/
 """
 
-__author__ = 'AvaFrame Team'
-__date__ = '2022'
-__copyright__ = '(C) 2022 by AvaFrame Team'
+__author__ = "AvaFrame Team"
+__date__ = "2022"
+__copyright__ = "(C) 2022 by AvaFrame Team"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 import subprocess
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
-                       QgsProcessingAlgorithm,
-                       QgsProcessingParameterString,
+    QgsProcessingAlgorithm,
+    QgsProcessingParameterString,
 )
 
 from qgis.PyQt.QtWidgets import (
@@ -45,22 +45,24 @@ from qgis.PyQt.QtWidgets import (
 
 class updateAlgorithm(QgsProcessingAlgorithm):
     """
-    Rename avaframe layers by adding choosen parameters and their values
+    Rename avaframe layers by adding chosen parameters and their values
     """
 
-    INPUT = 'INPUT'
+    INPUT = "INPUT"
 
     def initAlgorithm(self, config=None):
         """
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
-        self.addParameter(QgsProcessingParameterString(
+        self.addParameter(
+            QgsProcessingParameterString(
                 self.INPUT,
-                self.tr('Dummy input'),
+                self.tr("Dummy input"),
                 optional=True,
-                defaultValue="No need to add anything"
-            ))
+                defaultValue="Just leave this",
+            )
+        )
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -68,25 +70,28 @@ class updateAlgorithm(QgsProcessingAlgorithm):
         """
         import avaframe.version as gv
 
-        feedback.pushInfo('---------------')
-        feedback.pushInfo('AvaFrame Version before update: ' + gv.getVersion())
-        feedback.pushInfo('---------------')
-        feedback.pushInfo('')
+        feedback.pushInfo("---------------")
+        feedback.pushInfo("AvaFrame Version before update: " + gv.getVersion())
+        feedback.pushInfo("---------------")
+        feedback.pushInfo("")
         gvBefore = str(gv.getVersion())
 
-        subprocess.call(['pip3', 'install', '--upgrade', '--user', 'avaframe'])
+        # September 2024: shapely update is needed for Windows QGis Version 3.22
+        subprocess.call(["pip3", "install", "--upgrade", "--user", "shapely"])
+
+        subprocess.call(["pip3", "install", "--upgrade", "--user", "avaframe"])
 
         gvAfter = str(gv.getVersion())
-        feedback.pushInfo('---------------')
-        feedback.pushInfo('AvaFrame Version after update: ' + gv.getVersion())
-        feedback.pushInfo('---------------')
-        feedback.pushInfo('')
+        feedback.pushInfo("---------------")
+        feedback.pushInfo("AvaFrame Version after update: " + gv.getVersion())
+        feedback.pushInfo("---------------")
+        feedback.pushInfo("")
 
         if gvBefore == gvAfter:
-            feedback.pushInfo('---------------')
-            feedback.pushInfo(' YOU ALREADY HAVE THE LATEST VERSION')
-            feedback.pushInfo('---------------')
-            feedback.pushInfo('')
+            feedback.pushInfo("---------------")
+            feedback.pushInfo(" YOU ALREADY HAVE THE LATEST VERSION")
+            feedback.pushInfo("---------------")
+            feedback.pushInfo("")
 
         return {}
 
@@ -98,7 +103,7 @@ class updateAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'UpdateAvaFrame'
+        return "UpdateAvaFrame"
 
     def displayName(self):
         """
@@ -122,16 +127,16 @@ class updateAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Admin'
+        return "Admin"
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
+        return QCoreApplication.translate("Processing", string)
 
     def shortHelpString(self) -> str:
-        hstring = 'Updates the AvaFrame python package. \n\
+        hstring = "Updates the AvaFrame python package. \n\
                 The input is purely a dummy input, needed for this \
                 window to show up. \n\
-                No need to add anything.'
+                No need to add anything."
 
         return self.tr(hstring)
 

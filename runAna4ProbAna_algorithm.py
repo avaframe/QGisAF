@@ -139,7 +139,7 @@ class runAna4ProbAnaAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo("This might take a while")
         feedback.pushInfo("See console for progress")
 
-        subprocess.call(['python', '-m', 'avaframe.runAna4ProbAna', str(targetDir)])
+        subprocess.call(["python", "-m", "avaframe.runAna4ProbAna", str(targetDir)])
 
         feedback.pushInfo("Done, start loading the results")
 
@@ -169,7 +169,7 @@ class runAna4ProbAnaAlgorithm(QgsProcessingAlgorithm):
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return self.tr("Probability run (ana5, com1)")
+        return self.tr("Probability run (ana4, com1)")
 
     def group(self):
         """

@@ -22,13 +22,13 @@
  ***************************************************************************/
 """
 
-__author__ = 'AvaFrame Team'
-__date__ = '2022'
-__copyright__ = '(C) 2022 by AvaFrame Team'
+__author__ = "AvaFrame Team"
+__date__ = "2022"
+__copyright__ = "(C) 2022 by AvaFrame Team"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 import shutil
 import pathlib
@@ -36,16 +36,17 @@ import subprocess
 from pathlib import Path
 
 from qgis.PyQt.QtCore import QCoreApplication
-from qgis.core import (QgsProcessing,
-                       QgsProcessingException,
-                       QgsProcessingAlgorithm,
-                       QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterRasterLayer,
-                       QgsProcessingParameterMultipleLayers,
-                       QgsProcessingParameterFolderDestination,
-                       QgsProcessingOutputVectorLayer,
-                       QgsProcessingOutputMultipleLayers,
-                       )
+from qgis.core import (
+    QgsProcessing,
+    QgsProcessingException,
+    QgsProcessingAlgorithm,
+    QgsProcessingParameterFeatureSource,
+    QgsProcessingParameterRasterLayer,
+    QgsProcessingParameterMultipleLayers,
+    QgsProcessingParameterFolderDestination,
+    QgsProcessingOutputVectorLayer,
+    QgsProcessingOutputMultipleLayers,
+)
 
 
 class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
@@ -54,17 +55,17 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
     connector to work, more installation is needed. See instructions at docs.avaframe.org
     """
 
-    DEM = 'DEM'
-    REL = 'REL'
-    SECREL = 'SECREL'
-    ENT = 'ENT'
-    RES = 'RES'
-    PROFILE = 'PROFILE'
-    SPLITPOINTS = 'SPLITPOINTS'
-    OUTPUT = 'OUTPUT'
-    OUTPPR = 'OUTPPR'
-    FOLDEST = 'FOLDEST'
-    SMALLAVA = 'SMALLAVA'
+    DEM = "DEM"
+    REL = "REL"
+    SECREL = "SECREL"
+    ENT = "ENT"
+    RES = "RES"
+    PROFILE = "PROFILE"
+    SPLITPOINTS = "SPLITPOINTS"
+    OUTPUT = "OUTPUT"
+    OUTPPR = "OUTPPR"
+    FOLDEST = "FOLDEST"
+    SMALLAVA = "SMALLAVA"
 
     def initAlgorithm(self, config):
         """
@@ -72,77 +73,93 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
-        self.addParameter(QgsProcessingParameterRasterLayer(
-            self.DEM,
-            self.tr("DEM layer")))
+        self.addParameter(
+            QgsProcessingParameterRasterLayer(self.DEM, self.tr("DEM layer"))
+        )
 
-        self.addParameter(QgsProcessingParameterMultipleLayers(
-            self.REL,
-            self.tr('Release layer(s)'),
-            layerType=QgsProcessing.TypeVectorAnyGeometry
-            ))
-
-        self.addParameter(QgsProcessingParameterFeatureSource(
-            self.SECREL,
-            self.tr('Secondary release layer (only one is allowed)'),
-            optional=True,
-            defaultValue="",
-            types=[QgsProcessing.TypeVectorAnyGeometry]
-            ))
-
-        self.addParameter(QgsProcessingParameterFeatureSource(
-                self.ENT,
-                self.tr('Entrainment layer'),
-                optional=True,
-                defaultValue = "",
-                types=[QgsProcessing.TypeVectorAnyGeometry]
-            ))
-
-        self.addParameter(QgsProcessingParameterFeatureSource(
-                self.RES,
-                self.tr('Resistance layer'),
-                optional=True,
-                defaultValue = "",
-                types=[QgsProcessing.TypeVectorAnyGeometry]
-            ))
-
-        self.addParameter(QgsProcessingParameterFeatureSource(
-            self.PROFILE,
-            self.tr("Profile layer"),
-            optional=True,
-            defaultValue = "",
-            types=[QgsProcessing.TypeVectorLine]))
-
-        self.addParameter(QgsProcessingParameterFeatureSource(
-            self.SPLITPOINTS,
-            self.tr("Splitpoint layer"),
-            defaultValue = "",
-            optional=True,
-            types=[QgsProcessing.TypeVectorPoint]))
-
-
-        self.addParameter(QgsProcessingParameterFolderDestination(
-                self.FOLDEST,
-                self.tr('Destination folder')
-            ))
-
-   #          self.addParameter(QgsProcessingParameterBoolean(
-#                  self.SMALLAVA,
-#                  self.tr('Small Avalanche (for com2AB) '),
-#                  optional=True
-#              ))
-#  #
-        self.addOutput(QgsProcessingOutputVectorLayer(
-            self.OUTPUT,
-            self.tr("Output layer"),
-            QgsProcessing.TypeVectorAnyGeometry))
-
-        self.addOutput(
-        QgsProcessingOutputMultipleLayers(
-                self.OUTPPR,
+        self.addParameter(
+            QgsProcessingParameterMultipleLayers(
+                self.REL,
+                self.tr("Release layer(s)"),
+                layerType=QgsProcessing.TypeVectorAnyGeometry,
             )
         )
 
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.SECREL,
+                self.tr("Secondary release layer (only one is allowed)"),
+                optional=True,
+                defaultValue="",
+                types=[QgsProcessing.TypeVectorAnyGeometry],
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.ENT,
+                self.tr("Entrainment layer"),
+                optional=True,
+                defaultValue="",
+                types=[QgsProcessing.TypeVectorAnyGeometry],
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.RES,
+                self.tr("Resistance layer"),
+                optional=True,
+                defaultValue="",
+                types=[QgsProcessing.TypeVectorAnyGeometry],
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.PROFILE,
+                self.tr("Profile layer"),
+                optional=True,
+                defaultValue="",
+                types=[QgsProcessing.TypeVectorLine],
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.SPLITPOINTS,
+                self.tr("Splitpoint layer"),
+                defaultValue="",
+                optional=True,
+                types=[QgsProcessing.TypeVectorPoint],
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterFolderDestination(
+                self.FOLDEST, self.tr("Destination folder")
+            )
+        )
+
+        #          self.addParameter(QgsProcessingParameterBoolean(
+        #                  self.SMALLAVA,
+        #                  self.tr('Small Avalanche (for com2AB) '),
+        #                  optional=True
+        #              ))
+        #  #
+        self.addOutput(
+            QgsProcessingOutputVectorLayer(
+                self.OUTPUT,
+                self.tr("Output layer"),
+                QgsProcessing.TypeVectorAnyGeometry,
+            )
+        )
+
+        self.addOutput(
+            QgsProcessingOutputMultipleLayers(
+                self.OUTPPR,
+            )
+        )
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -153,10 +170,10 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         import avaframe.version as gv
         from . import avaframeConnector_commonFunc as cF
 
-        feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
+        feedback.pushInfo("AvaFrame Version: " + gv.getVersion())
 
         # targetADDTONAME = self.parameterAsString(parameters, self.ADDTONAME, context)
-        targetADDTONAME = ''
+        targetADDTONAME = ""
 
         sourceDEM = self.parameterAsRasterLayer(parameters, self.DEM, context)
         if sourceDEM is None:
@@ -177,7 +194,7 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         # Secondary release files
         sourceSecREL = self.parameterAsVectorLayer(parameters, self.SECREL, context)
         if sourceSecREL is not None:
-            srInfo = '_sec' + Path(sourceSecREL.source()).stem
+            srInfo = "_sec" + Path(sourceSecREL.source()).stem
             targetADDTONAME = targetADDTONAME + srInfo
 
         sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
@@ -188,48 +205,49 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
 
         sourcePROFILE = self.parameterAsVectorLayer(parameters, self.PROFILE, context)
 
-        sourceSPLITPOINTS= self.parameterAsVectorLayer(parameters, self.SPLITPOINTS, context)
+        sourceSPLITPOINTS = self.parameterAsVectorLayer(
+            parameters, self.SPLITPOINTS, context
+        )
 
         # create folder structure
         finalTargetDir = pathlib.Path(sourceFOLDEST)
-        targetDir = finalTargetDir 
+        targetDir = finalTargetDir
         iP.initializeFolderStruct(targetDir, removeExisting=True)
 
         # copy DEM
         cF.copyDEM(sourceDEM, targetDir)
 
         # copy all release shapefile parts
-        cF.copyMultipleShp(relDict, targetDir / 'Inputs' / 'REL', targetADDTONAME)
+        cF.copyMultipleShp(relDict, targetDir / "Inputs" / "REL", targetADDTONAME)
 
         # copy all secondary release shapefile parts
         if sourceSecREL is not None:
-            cF.copyShp(sourceSecREL.source(), targetDir / 'Inputs' / 'SECREL')
-
+            cF.copyShp(sourceSecREL.source(), targetDir / "Inputs" / "SECREL")
 
         # copy all entrainment shapefile parts
         if sourceENT is not None:
-            cF.copyShp(sourceENT.source(), targetDir / 'Inputs' / 'ENT')
+            cF.copyShp(sourceENT.source(), targetDir / "Inputs" / "ENT")
 
         # copy all resistance shapefile parts
         if sourceRES is not None:
-            cF.copyShp(sourceRES.source(), targetDir / 'Inputs' / 'RES')
+            cF.copyShp(sourceRES.source(), targetDir / "Inputs" / "RES")
 
         # copy all Splitpoint shapefile parts
         if sourceSPLITPOINTS is not None:
-            cF.copyShp(sourceSPLITPOINTS.source(), targetDir / 'Inputs' / 'POINTS')
+            cF.copyShp(sourceSPLITPOINTS.source(), targetDir / "Inputs" / "POINTS")
 
         # copy all Profile shapefile parts
         if sourcePROFILE is not None:
             sourcePROFILEPath = pathlib.Path(sourcePROFILE.source())
-            targetPROFILEPath = targetDir / 'Inputs' / 'LINES'
+            targetPROFILEPath = targetDir / "Inputs" / "LINES"
 
             shpParts = cF.getSHPParts(sourcePROFILEPath)
 
             for shpPart in shpParts:
                 try:
                     # make sure this file contains AB (for com2AB)
-                    if 'AB' not in str(shpPart):
-                        newName = shpPart.stem + '_AB' + shpPart.suffix
+                    if "AB" not in str(shpPart):
+                        newName = shpPart.stem + "_AB" + shpPart.suffix
                         newName = targetPROFILEPath / newName
                         shutil.copy(shpPart, newName)
                     else:
@@ -237,14 +255,14 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
                 except shutil.SameFileError:
                     pass
 
-        feedback.pushInfo('Starting the simulations')
-        feedback.pushInfo('This might take a while')
-        feedback.pushInfo('See console for progress')
+        feedback.pushInfo("Starting the simulations")
+        feedback.pushInfo("This might take a while")
+        feedback.pushInfo("See console for progress")
 
         # abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
-        subprocess.call(['python', '-m', 'avaframe.runOperational', str(targetDir)])
+        subprocess.call(["python", "-m", "avaframe.runOperational", str(targetDir)])
 
-        feedback.pushInfo('Done, start loading the results')
+        feedback.pushInfo("Done, start loading the results")
 
         # Move input and output folders to finalTargetDir
 
@@ -260,10 +278,10 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
 
         context = cF.addSingleLayerToContext(context, abResultsLayer, self.OUTPUT)
 
-        feedback.pushInfo('\n---------------------------------')
-        feedback.pushInfo('Done, find results and logs here:')
+        feedback.pushInfo("\n---------------------------------")
+        feedback.pushInfo("Done, find results and logs here:")
         feedback.pushInfo(str(targetDir.resolve()))
-        feedback.pushInfo('---------------------------------\n')
+        feedback.pushInfo("---------------------------------\n")
 
         if abResultsLayer is None:
             return {self.OUTPPR: allRasterLayers}
@@ -278,14 +296,14 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'fulloperationalrun'
+        return "fulloperationalrun"
 
     def displayName(self):
         """
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return self.tr('Full Operational Run')
+        return self.tr("Operational Run (com1 and com2)")
 
     def group(self):
         """
@@ -302,19 +320,19 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Operational'
+        return "Operational"
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
+        return QCoreApplication.translate("Processing", string)
 
     def shortHelpString(self) -> str:
-        hstring = 'Runs the operational workflow (com1DFA and com2AB). \n\
+        hstring = "Runs the operational workflow (com1DFA and com2AB). \n\
                 For more information go to: \n\
                 AvaFrame Documentation: https://docs.avaframe.org\n\
                 Homepage: https://avaframe.org\n\
-                Praxisleitfaden: https://avaframe.org/reports\n'
+                Praxisleitfaden: https://avaframe.org/reports\n"
 
-        return self.tr(hstring) 
+        return self.tr(hstring)
 
     def helpUrl(self):
         return "https://docs.avaframe.org/en/latest/connector.html"

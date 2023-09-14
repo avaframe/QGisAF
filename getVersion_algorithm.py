@@ -22,18 +22,18 @@ GetVersion
  ***************************************************************************/
 """
 
-__author__ = 'AvaFrame Team'
-__date__ = '2022'
-__copyright__ = '(C) 2022 by AvaFrame Team'
+__author__ = "AvaFrame Team"
+__date__ = "2022"
+__copyright__ = "(C) 2022 by AvaFrame Team"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
-                       QgsProcessingAlgorithm,
-                       QgsProcessingParameterString,
+    QgsProcessingAlgorithm,
+    QgsProcessingParameterString,
 )
 
 
@@ -42,7 +42,7 @@ class getVersionAlgorithm(QgsProcessingAlgorithm):
     Rename avaframe layers by adding choosen parameters and their values
     """
 
-    INPUT = 'INPUT'
+    INPUT = "INPUT"
 
     def initAlgorithm(self, config):
         """
@@ -50,12 +50,14 @@ class getVersionAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
-        self.addParameter(QgsProcessingParameterString(
+        self.addParameter(
+            QgsProcessingParameterString(
                 self.INPUT,
-                self.tr('Dummy input'),
+                self.tr("Dummy input"),
                 optional=True,
-                defaultValue="No need to add anything"
-            ))
+                defaultValue="Just leave this",
+            )
+        )
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -63,10 +65,10 @@ class getVersionAlgorithm(QgsProcessingAlgorithm):
         """
         import avaframe.version as gv
 
-        feedback.pushInfo('---------------')
-        feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
-        feedback.pushInfo('---------------')
-        feedback.pushInfo('')
+        feedback.pushInfo("---------------")
+        feedback.pushInfo("AvaFrame Version: " + gv.getVersion())
+        feedback.pushInfo("---------------")
+        feedback.pushInfo("")
 
         return {}
 
@@ -78,7 +80,7 @@ class getVersionAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'GetVersion'
+        return "GetVersion"
 
     def displayName(self):
         """
@@ -102,16 +104,16 @@ class getVersionAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Admin'
+        return "Admin"
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
+        return QCoreApplication.translate("Processing", string)
 
     def shortHelpString(self) -> str:
-        hstring = 'Returns the version of AvaFrame. \n\
+        hstring = "Returns the version of AvaFrame. \n\
                 The input is purely a dummy input, needed for this \
                 window to show up. \n\
-                No need to add anything.'
+                No need to add anything."
 
         return self.tr(hstring)
 
