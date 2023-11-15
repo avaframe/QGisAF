@@ -47,6 +47,7 @@ from qgis.PyQt.QtWidgets import (
     QMessageBox,
 )
 
+
 # Check for avaframe, if not available, install...
 # Note: not the best solution (okok, it is utterly disgustingly hacky), but the only one available atm (Sep 2022)
 def find_python():
@@ -89,9 +90,9 @@ from .avaframeConnector_algorithm import AvaFrameConnectorAlgorithm
 from .layerRename_algorithm import layerRenameAlgorithm
 from .getVersion_algorithm import getVersionAlgorithm
 from .runCom1DFA_algorithm import runCom1DFAAlgorithm
-from .runCom6Fois_algorithm import runCom6FoisAlgorithm
 from .runCom2AB_algorithm import runCom2ABAlgorithm
 from .runCom5SnowSlide_algorithm import runCom5SnowSlideAlgorithm
+from .runCom6RockAvalanche_algorithm import runCom6RockAvalancheAlgorithm
 from .runAna4ProbAna_algorithm import runAna4ProbAnaAlgorithm
 from .runIn1RelInfo_algorithm import runIn1RelInfoAlgorithm
 from .update_algorithm import updateAlgorithm
@@ -122,9 +123,9 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         self.addAlgorithm(AvaFrameConnectorAlgorithm())
         self.addAlgorithm(layerRenameAlgorithm())
         self.addAlgorithm(runCom1DFAAlgorithm())
-        self.addAlgorithm(runCom6FoisAlgorithm())
         self.addAlgorithm(runCom2ABAlgorithm())
         self.addAlgorithm(runCom5SnowSlideAlgorithm())
+        self.addAlgorithm(runCom6RockAvalancheAlgorithm())
         self.addAlgorithm(runAna4ProbAnaAlgorithm())
         self.addAlgorithm(getVersionAlgorithm())
         self.addAlgorithm(updateAlgorithm())
@@ -142,8 +143,6 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         """
         Returns the provider name, which is used to describe the provider
         within the GUI.
-
-        This string should be short (e.g. "Lastools") and localised.
         """
         return self.tr("AVAFRAME")
 
@@ -158,7 +157,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
 
     def longName(self):
         """
-        Returns the a longer version of the provider name, which can include
+        Returns the longer version of the provider name, which can include
         extra details such as version numbers. E.g. "Lastools LIDAR tools
         (version 2.2.1)". This string should be localised. The default
         implementation returns the same string as name().
