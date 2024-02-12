@@ -94,6 +94,7 @@ from .runCom2AB_algorithm import runCom2ABAlgorithm
 from .runCom5SnowSlide_algorithm import runCom5SnowSlideAlgorithm
 from .runCom6RockAvalanche_algorithm import runCom6RockAvalancheAlgorithm
 from .runAna4ProbAna_algorithm import runAna4ProbAnaAlgorithm
+from .runAna4ProbDirOnly_algorithm import runAna4ProbDirOnlyAlgorithm
 from .runIn1RelInfo_algorithm import runIn1RelInfoAlgorithm
 from .update_algorithm import updateAlgorithm
 
@@ -127,6 +128,7 @@ class AvaFrameConnectorProvider(QgsProcessingProvider):
         self.addAlgorithm(runCom5SnowSlideAlgorithm())
         self.addAlgorithm(runCom6RockAvalancheAlgorithm())
         self.addAlgorithm(runAna4ProbAnaAlgorithm())
+        self.addAlgorithm(runAna4ProbDirOnlyAlgorithm())
         self.addAlgorithm(getVersionAlgorithm())
         self.addAlgorithm(updateAlgorithm())
         self.addAlgorithm(runIn1RelInfoAlgorithm())
