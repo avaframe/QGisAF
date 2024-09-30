@@ -259,7 +259,7 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo('\n---------------------------------')
         feedback.pushInfo('Done, find results and logs here:')
-        feedback.pushInfo(str(targetDir.resolve()))
+        feedback.pushInfo(str(finalTargetDir.resolve()))
         feedback.pushInfo('---------------------------------\n')
 
         return {self.OUTPPR: allRasterLayers}
