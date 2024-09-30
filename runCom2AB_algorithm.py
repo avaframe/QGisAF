@@ -34,13 +34,13 @@ __revision__ = '$Format:%H$'
 import pathlib
 import subprocess
 import shutil
-from pathlib import Path
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterFeatureSource,
+                       QgsProcessingParameterBoolean,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterFolderDestination,
                        QgsProcessingOutputVectorLayer,
@@ -82,15 +82,15 @@ class runCom2ABAlgorithm(QgsProcessingAlgorithm):
             defaultValue="",
             types=[QgsProcessing.TypeVectorPoint]))
 
-#          self.addParameter(QgsProcessingParameterBoolean(
-#                  self.SMALLAVA,
-#                  self.tr('Small Avalanche (for com2AB) '),
-#                  optional=True
-#              ))
+        self.addParameter(QgsProcessingParameterBoolean(
+             self.SMALLAVA,
+             self.tr('Small Avalanche calibration'),
+             optional=True
+             ))
 
         self.addParameter(QgsProcessingParameterFolderDestination(
-                self.FOLDEST,
-                self.tr('Destination folder')
+            self.FOLDEST,
+            self.tr('Destination folder')
             ))
 
         self.addOutput(QgsProcessingOutputVectorLayer(
@@ -122,6 +122,8 @@ class runCom2ABAlgorithm(QgsProcessingAlgorithm):
         sourcePROFILE = self.parameterAsVectorLayer(parameters, self.PROFILE, context)
 
         sourceSPLITPOINTS = self.parameterAsVectorLayer(parameters, self.SPLITPOINTS, context)
+
+        useSmallAva= self.parameterAsBool(parameters, self.SMALLAVA, context)
 
         # create folder structure (targetDir is the tmp one)
         finalTargetDir, targetDir = cF.createFolderStructure(sourceFOLDEST)
@@ -157,7 +159,10 @@ class runCom2ABAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo('Starting alpha beta')
         feedback.pushInfo('See console for progress')
 
-        subprocess.call(['python', '-m', 'avaframe.runCom2AB', str(targetDir)])
+        if useSmallAva:
+            subprocess.call(['python', '-m', 'avaframe.runCom2AB', str(targetDir), '--small_ava'])
+        else:
+            subprocess.call(['python', '-m', 'avaframe.runCom2AB', str(targetDir)])
 
         feedback.pushInfo('Done, start loading the results')
 
