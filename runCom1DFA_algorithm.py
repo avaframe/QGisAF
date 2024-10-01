@@ -168,7 +168,6 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
 
-        from avaframe.in3Utils import initializeProject as iP
         import avaframe.version as gv
         from . import avaframeConnector_commonFunc as cF
 
@@ -180,8 +179,6 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         sourceDEM = self.parameterAsRasterLayer(parameters, self.DEM, context)
         if sourceDEM is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
-
-        # sourceRELTH = self.parameterAsRasterLayer(parameters, self.RELTH, context)
 
         # Release files
         allREL = self.parameterAsLayerList(parameters, self.REL, context)
@@ -223,10 +220,6 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         # copy all secondary release shapefile parts
         if sourceSecREL is not None:
             cF.copyShp(sourceSecREL.source(), targetDir / 'Inputs' / 'SECREL')
-        
-
-        # if sourceRELTH is not None:
-        #     cF.copyShp(sourceRELTH.source(), targetDir / 'Inputs' / 'RELTH')
 
         # copy all entrainment shapefile parts
         if sourceENT is not None:

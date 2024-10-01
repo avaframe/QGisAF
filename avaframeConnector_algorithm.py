@@ -209,10 +209,9 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
             parameters, self.SPLITPOINTS, context
         )
 
-        # create folder structure
-        finalTargetDir = pathlib.Path(sourceFOLDEST)
-        targetDir = finalTargetDir
-        iP.initializeFolderStruct(targetDir, removeExisting=True)
+
+        # create folder structure (targetDir is the tmp one)
+        finalTargetDir, targetDir = cF.createFolderStructure(sourceFOLDEST)
 
         # copy DEM
         cF.copyDEM(sourceDEM, targetDir)
@@ -265,22 +264,23 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo("Done, start loading the results")
 
         # Move input and output folders to finalTargetDir
+        cF.moveInputAndOutputFoldersToFinal(targetDir, finalTargetDir)
 
         # Get peakfiles to return to QGIS
-        rasterResults = cF.getLatestPeak(targetDir)
+        rasterResults = cF.getLatestPeak(finalTargetDir)
 
         allRasterLayers = cF.addStyleToCom1DFAResults(rasterResults)
 
         context = cF.addLayersToContext(context, allRasterLayers, self.OUTPPR)
 
         # Get alphabeta shapefile to return to QGIS
-        abResultsLayer = cF.getAlphaBetaResults(targetDir)
+        abResultsLayer = cF.getAlphaBetaResults(finalTargetDir)
 
         context = cF.addSingleLayerToContext(context, abResultsLayer, self.OUTPUT)
 
         feedback.pushInfo("\n---------------------------------")
         feedback.pushInfo("Done, find results and logs here:")
-        feedback.pushInfo(str(targetDir.resolve()))
+        feedback.pushInfo(str(finalTargetDir.resolve()))
         feedback.pushInfo("---------------------------------\n")
 
         if abResultsLayer is None:

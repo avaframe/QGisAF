@@ -9,7 +9,7 @@ Licensed with [![European Public License EUPL](https://img.shields.io/badge/lice
 
 ### For development: 
 
-it is possible to install qgis in a conda enviroment:
+it is possible to install qgis in a conda environment:
 conda install qgis --channel conda-forge
 
 for the pb_tool
