@@ -171,7 +171,7 @@ class runCom2ABAlgorithm(QgsProcessingAlgorithm):
 
         # Get alphabeta shapefile to return to QGIS
         try:
-            abResultsLayer = cF.getAlphaBetaResults(finalTargetDir)
+            abResultsLayer = cF.getAlphaBetaResults(finalTargetDir, useSmallAva)
         except:
             raise QgsProcessingException(self.tr('Something went wrong with com2AB, please check log files'))
 
