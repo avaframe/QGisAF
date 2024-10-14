@@ -112,20 +112,26 @@ def getLatestPeak(targetDir):
     return rasterResults
 
 
-def getAlphaBetaResults(targetDir):
+def getAlphaBetaResults(targetDir, useSmallAva=False):
     '''Get results of com2AB
 
         Parameters
         -----------
         targetDir: pathlib path
             to avalanche directory
+        useSmallAva: boolean
+            whether to look for small avalanche results
+
         Returns
         -------
 
     '''
     from qgis.core import (QgsVectorLayer)
     avaDir = pathlib.Path(str(targetDir))
-    abResultsFile = avaDir / 'Outputs' / 'com2AB' / 'com2AB_Results.shp'
+    if useSmallAva:
+        abResultsFile = avaDir / 'Outputs' / 'com2AB' / 'com2AB_Results_small.shp'
+    else:
+        abResultsFile = avaDir / 'Outputs' / 'com2AB' / 'com2AB_Results.shp'
 
     if pathlib.Path.is_file(abResultsFile):
         abResultsLayer = QgsVectorLayer(str(abResultsFile), "AlphaBeta (com2)", "ogr")
