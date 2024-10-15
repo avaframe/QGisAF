@@ -296,7 +296,7 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
     def shortHelpString(self) -> str:
         hstring = 'Runs dense flow simulations via module com1DFA. \n\
-                IMPORTANT: change avalanche size (=friction relation) to "Large" if runout is above 1500msl. \n\
+                IMPORTANT: change avalanche size (=friction relation) to "Large" if runout is above 1600msl. \n\
                 For more information go to (or use the help button below): \n\
                 AvaFrame Documentation: https://docs.avaframe.org\n\
                 Homepage: https://avaframe.org\n\
