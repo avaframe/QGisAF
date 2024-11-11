@@ -141,8 +141,37 @@ def getAlphaBetaResults(targetDir, useSmallAva=False):
         abResultsLayer = QgsVectorLayer(str(abResultsFile), "AlphaBeta (com2)", "ogr")
         return abResultsLayer
     else:
-        return "None"
+        return 'None'
 
+def getDFAPathResults(targetDir):
+    '''Get results from path generation
+
+        Parameters
+        -----------
+        targetDir: pathlib path
+            to avalanche directory
+        Returns
+        -------
+        DFAPathResults : massAvgPath and splitPoint
+    '''
+    from qgis.core import (QgsVectorLayer)
+    avaDir = pathlib.Path(str(targetDir))
+    pathDir = avaDir / 'Outputs' / 'ana5Utils' / 'DFAPath'
+    allDFAPathLayers = []
+
+    # Collect all path shapefiles
+    for file in pathDir.glob('massAvgPath*.shp'):
+        pathLayer = QgsVectorLayer(str(file), f"Mass Average Path - {file.stem}", "ogr")
+        if pathLayer.isValid():
+            allDFAPathLayers.append(pathLayer)
+
+    # Collect all split point shapefiles
+    for file in pathDir.glob('splitPointParabolicFit*.shp'):
+        splitPointLayer = QgsVectorLayer(str(file), f"Split Point - {file.stem}", "ogr")
+        if splitPointLayer.isValid():
+            allDFAPathLayers.append(splitPointLayer)
+
+    return allDFAPathLayers
 
 def getAna4ProbAnaResults(targetDir):
     """Get results of ana4PropAna
