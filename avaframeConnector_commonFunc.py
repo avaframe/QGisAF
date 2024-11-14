@@ -3,9 +3,11 @@ import pathlib
 import shutil
 import pandas as pd
 import sys
+import subprocess
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as iP
 
+from qgis.core import QgsProcessingException
 
 
 def copyDEM(dem, targetDir):
@@ -286,6 +288,7 @@ def moveInputAndOutputFoldersToFinal(targetDir, finalTargetDir):
 
     return 'Success'
 
+
 def createFolderStructure(foldDest):
     ''' create (tmp) folder structure
 
@@ -310,4 +313,43 @@ def createFolderStructure(foldDest):
     if finalOutputs.is_dir():
         shutil.copytree(finalOutputs, targetDir / 'Outputs', dirs_exist_ok=True)
 
-    return(finalTargetDir, targetDir)
+    return (finalTargetDir, targetDir)
+
+
+def analyseLogFromDir(simDir):
+    """ Searches simulation folder for latest log
+
+        Parameters
+        -----------
+        simDir: path/str
+            Simulation folder to search for log
+        Returns
+        -------
+    """
+
+    logFile = list(simDir.glob('*.log'))
+    with open(logFile[-1], 'r') as logF:
+        for lineNumber, line in enumerate(logF):
+            if 'ERROR' in line:
+                print('ERROR found in file')
+                print('Line Number:', lineNumber)
+                print('Line:', line)
+
+
+def runAndCheck(command, self):
+    """ uses command to run via subprocess and checks for errors
+
+        Parameters
+        -----------
+        command: array
+            needed for subprocess.run
+        Returns
+        -------
+        raises Error if command fails otherwise no return value
+    """
+    try:
+        subprocess.run(command, check=True, capture_output=True)
+    except subprocess.CalledProcessError as err:
+        lastErrLine = err.stderr.decode('utf8').splitlines()[-1]
+        cleanErrorMsg = 'ERROR:' + lastErrLine.split(':')[-1]
+        raise QgsProcessingException(self.tr(cleanErrorMsg))
