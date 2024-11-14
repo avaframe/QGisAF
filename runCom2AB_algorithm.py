@@ -107,7 +107,6 @@ class runCom2ABAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
 
-        from avaframe.in3Utils import initializeProject as iP
         import avaframe.version as gv
         from . import avaframeConnector_commonFunc as cF
 
@@ -160,11 +159,15 @@ class runCom2ABAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo('See console for progress')
 
         if useSmallAva:
-            subprocess.call(['python', '-m', 'avaframe.runCom2AB', str(targetDir), '--small_ava'])
+            command = ['python', '-m', 'avaframe.runCom2AB', str(targetDir), '--small_ava']
         else:
-            subprocess.call(['python', '-m', 'avaframe.runCom2AB', str(targetDir)])
+            command = ['python', '-m', 'avaframe.runCom2AB', str(targetDir)]
+
+        # run command via subprocess.run and check for errors
+        cF.runAndCheck(command, self)
 
         feedback.pushInfo('Done, start loading the results')
+
 
         # Move input, log and output folders to finalTargetDir
         cF.moveInputAndOutputFoldersToFinal(targetDir, finalTargetDir)
@@ -173,6 +176,7 @@ class runCom2ABAlgorithm(QgsProcessingAlgorithm):
         try:
             abResultsLayer = cF.getAlphaBetaResults(finalTargetDir, useSmallAva)
         except:
+            # cF.analyseLogFromDir(finalTargetDir) TODO: this needs to be better handled
             raise QgsProcessingException(self.tr('Something went wrong with com2AB, please check log files'))
 
         context = cF.addSingleLayerToContext(context, abResultsLayer, self.OUTPUT)

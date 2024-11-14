@@ -233,7 +233,9 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo('This might take a while')
         feedback.pushInfo('See console for progress')
 
-        subprocess.call(['python', '-m', 'avaframe.runCom1DFA', str(targetDir), '-fc', str(frictString)])
+        # Generate command and run via subprocess.run
+        command = ['python', '-m', 'avaframe.runCom1DFA', str(targetDir), '-fc', str(frictString)]
+        cF.runAndCheck(command, self)
 
         feedback.pushInfo('Done, start loading the results')
 

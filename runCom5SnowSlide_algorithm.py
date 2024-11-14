@@ -166,7 +166,9 @@ class runCom5SnowSlideAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo("This might take a while")
         feedback.pushInfo("See console for more info")
 
-        subprocess.call(['python', '-m', 'avaframe.runCom5SnowSlide', str(targetDir)])
+        # Generate command and run via subprocess.run
+        command = ['python', '-m', 'avaframe.runCom5SnowSlide', str(targetDir)]
+        cF.runAndCheck(command, self)
 
         feedback.pushInfo("Done, start loading the results")
 
