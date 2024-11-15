@@ -100,9 +100,9 @@ class runAna4ProbDirOnlyAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo("This might take a while")
         feedback.pushInfo("See console for progress")
 
-        subprocess.call(
-            ["python", "-m", "avaframe.runProbAnalysisOnly", str(targetDir)]
-        )
+        # Generate command and run via subprocess.run
+        command = ["python", "-m", "avaframe.runProbAnalysisOnly", str(targetDir)]
+        cF.runAndCheck(command, self, feedback)
 
         feedback.pushInfo("Done, start loading the results")
 
