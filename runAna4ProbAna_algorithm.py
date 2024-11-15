@@ -139,7 +139,9 @@ class runAna4ProbAnaAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo("This might take a while")
         feedback.pushInfo("See console for progress")
 
-        subprocess.call(["python", "-m", "avaframe.runAna4ProbAna", str(targetDir)])
+        # Generate command and run via subprocess.run
+        command = ["python", "-m", "avaframe.runAna4ProbAna", str(targetDir)]
+        cF.runAndCheck(command, self, feedback)
 
         feedback.pushInfo("Done, start loading the results")
 

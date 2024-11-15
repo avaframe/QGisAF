@@ -168,7 +168,7 @@ class runCom5SnowSlideAlgorithm(QgsProcessingAlgorithm):
 
         # Generate command and run via subprocess.run
         command = ['python', '-m', 'avaframe.runCom5SnowSlide', str(targetDir)]
-        cF.runAndCheck(command, self)
+        cF.runAndCheck(command, self, feedback)
 
         feedback.pushInfo("Done, start loading the results")
 

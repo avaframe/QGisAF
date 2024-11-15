@@ -190,14 +190,9 @@ class runCom6RockAvalancheAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo("This might take a while")
         feedback.pushInfo("See console for progress")
 
-        subprocess.call(
-            [
-                "python",
-                "-m",
-                "avaframe.runCom6RockAvalanche",
-                str(targetDir),
-            ]
-        )
+        # Generate command and run via subprocess
+        command = ["python", "-m", "avaframe.runCom6RockAvalanche", str(targetDir)]
+        cF.runAndCheck(command, self, feedback)
 
         feedback.pushInfo("Done, start loading the results")
 

@@ -258,8 +258,9 @@ class AvaFrameConnectorAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo("This might take a while")
         feedback.pushInfo("See console for progress")
 
-        # abResultsSource, rasterResults = runOp.runOperational(str(targetDir))
-        subprocess.call(["python", "-m", "avaframe.runOperational", str(targetDir)])
+        # Generate command and run via subprocess
+        command = ["python", "-m", "avaframe.runOperational", str(targetDir)]
+        cF.runAndCheck(command, self, feedback)
 
         feedback.pushInfo("Done, start loading the results")
 
