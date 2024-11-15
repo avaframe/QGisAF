@@ -164,7 +164,7 @@ class runCom2ABAlgorithm(QgsProcessingAlgorithm):
             command = ['python', '-m', 'avaframe.runCom2AB', str(targetDir)]
 
         # run command via subprocess.run and check for errors
-        cF.runAndCheck(command, self)
+        cF.runAndCheck(command, self, feedback)
 
         feedback.pushInfo('Done, start loading the results')
 
