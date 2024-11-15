@@ -3,6 +3,8 @@ import pathlib
 import shutil
 import pandas as pd
 import sys
+import os
+import platform
 import subprocess
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as iP
@@ -336,7 +338,7 @@ def analyseLogFromDir(simDir):
                 print('Line:', line)
 
 
-def runAndCheck(command, self):
+def runAndCheck(command, self, feedback):
     """ uses command to run via subprocess and checks for errors
 
         Parameters
@@ -348,7 +350,53 @@ def runAndCheck(command, self):
         raises Error if command fails otherwise no return value
     """
     try:
-        subprocess.run(command, check=True, capture_output=True)
+        # subpro = subprocess.run(command, check=True, capture_output=True, stdout=subprocess.PIPE)
+
+        if os.name == "nt":
+            useShell = True
+        elif platform.system() == "Darwin":
+            useShell = False
+        else:
+            useShell = False
+
+        # -------------------------------------------------------one sol
+        # This kinda works
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=useShell,
+            encoding='utf-8',
+            errors='replace',
+            universal_newlines=True
+        )
+
+        printCounter = 0
+        counter  = 1
+
+        while True:
+            realtimeOutput = process.stdout.readline()
+
+            if realtimeOutput == '' and process.poll() is not None:
+                break
+
+            if realtimeOutput:
+                line = realtimeOutput.strip()
+                if 'time step' in line:
+                    counter = counter + 1
+                    printCounter = printCounter + 1
+                    if printCounter > 100:
+                        # print('\r' + line, flush=True, end='')
+                        msg = "Process is running. Reported time steps (all sims): " + str(counter * printCounter)
+                        feedback.pushInfo(msg)
+                        printCounter = 0
+                elif 'ERROR' in line:
+                    cleanErrorMsg = 'ERROR:' + line.split(':')[-1]
+                    raise QgsProcessingException(self.tr(cleanErrorMsg))
+                else:
+                    print(line, flush=True)
+                    feedback.pushInfo(line)
+
     except subprocess.CalledProcessError as err:
         lastErrLine = err.stderr.decode('utf8').splitlines()[-1]
         cleanErrorMsg = 'ERROR:' + lastErrLine.split(':')[-1]

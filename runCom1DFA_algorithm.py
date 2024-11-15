@@ -235,7 +235,7 @@ class runCom1DFAAlgorithm(QgsProcessingAlgorithm):
 
         # Generate command and run via subprocess.run
         command = ['python', '-m', 'avaframe.runCom1DFA', str(targetDir), '-fc', str(frictString)]
-        cF.runAndCheck(command, self)
+        cF.runAndCheck(command, self, feedback)
 
         feedback.pushInfo('Done, start loading the results')
 
