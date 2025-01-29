@@ -189,7 +189,7 @@ def getAna4ProbAnaResults(targetDir):
     avaDir = pathlib.Path(str(targetDir))
     ana4ResultsDir = avaDir / "Outputs" / "ana4Stats"
 
-    globbed = ana4ResultsDir.glob(avaDir.stem + "*.asc")
+    globbed = list(ana4ResultsDir.glob(avaDir.stem + "*.asc")) + list(ana4ResultsDir.glob(avaDir.stem + "*.tif"))
     scriptDir = pathlib.Path(__file__).parent
     qml = str(scriptDir / "QGisStyles" / "probMap.qml")
 
