@@ -30,7 +30,8 @@ __revision__ = "$Format:%H$"
 
 
 import pathlib
-import subprocess
+import os
+import platform
 
 
 from qgis.PyQt.QtCore import QCoreApplication
@@ -147,10 +148,19 @@ class runIn1RelInfoAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo("Find the release area info file here:")
         feedback.pushInfo(str(resDir.resolve()))
 
+
         feedback.pushInfo("---------------------------------\n")
 
+        # Trying to show the output folder in the file explorer
+        outputDir = os.path.dirname(resDir)
+        if platform.system() == 'Windows':
+            os.startfile(outputDir)
+        elif platform.system() == 'Darwin':  # macOS
+            os.system(f'open "{outputDir}"')
+        else:  # Linux
+            os.system(f'xdg-open "{outputDir}"')
+
         return {}
-        # return {self.OUTPUT: rasterResults}
 
     def name(self):
         """
