@@ -6,7 +6,7 @@
 name=AvaFrameConnector
 qgisMinimumVersion=3.18
 description=Connects to AvaFrame
-version=1.9
+version=1.10
 author=AvaFrame Team
 email=felix@avaframe.org
 
@@ -24,7 +24,8 @@ repository=https://github.com/avaframe/QGisAF
 
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
-changelog= 1.9 Add small ava to com2AB, fix deletion runOperational
+changelog= 1.10 Add path generation tool, accept geotiff as raster input
+    1.9 Add small ava to com2AB, fix deletion runOperational
     1.8 Add com6RockAvalanche, ana5PropAnaOnlyDirectory
     1.6 Split com1 com2, snow slides, release area statistics and probability maps
     1.5.1 Parallel execution and glide snow experimental
