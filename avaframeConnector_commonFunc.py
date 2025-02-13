@@ -432,8 +432,7 @@ def runAndCheck(command, self, feedback):
 
             # Handle ERRORs
             elif "ERROR" in line:
-                cleanErrorMsg = "ERROR:" + line.split(":")[-1]
-                raise QgsProcessingException(self.tr(cleanErrorMsg))
+                raise QgsProcessingException(self.tr(line))
             else:
                 print(line, flush=True)
                 feedback.pushInfo(line)
