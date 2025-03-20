@@ -87,6 +87,26 @@ def getSHPParts(base):
     return globbed
 
 
+# TODO: maybe combine this with getLatestPeak
+def getLatestPeakCom8(targetDir):
+    """Get latest peakFiles of com8MoTPSA results
+
+    Parameters
+    -----------
+    targetDir: pathlib path
+        to avalanche directory
+    Returns
+    -------
+    rasterResults: dataframe
+        dataframe with info about simulations, including path
+    """
+    avaDir = pathlib.Path(str(targetDir))
+    inputDirPeak = avaDir / "Outputs" / "com8MoTPSA" / "peakFiles"
+    allRasterResults = fU.makeSimDF(inputDirPeak, avaDir=avaDir)
+
+    return allRasterResults
+
+
 def getLatestPeak(targetDir):
     """Get latest peakFiles of com1DFA results
 
@@ -225,6 +245,7 @@ def addStyleToCom1DFAResults(rasterResults):
     qmls = dict()
     qmls["ppr"] = str(scriptDir / "QGisStyles" / "ppr.qml")
     qmls["pft"] = str(scriptDir / "QGisStyles" / "pft.qml")
+    qmls["pfd"] = str(scriptDir / "QGisStyles" / "pft.qml")
     qmls["pfv"] = str(scriptDir / "QGisStyles" / "pfv.qml")
     qmls["PR"] = str(scriptDir / "QGisStyles" / "ppr.qml")
     qmls["FV"] = str(scriptDir / "QGisStyles" / "pfv.qml")
