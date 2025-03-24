@@ -101,7 +101,7 @@ class runCom8MoTPSAAlgorithm(QgsProcessingAlgorithm):
         # self.addParameter(QgsProcessingParameterMultipleLayers(
         self.addParameter(QgsProcessingParameterFeatureSource(
             self.SECREL,
-            self.tr('Secondary release layer (only one is allowed)'),
+            self.tr('Bed shear strength'),
             optional=True,
             defaultValue="",
             types=[QgsProcessing.TypeVectorAnyGeometry]
@@ -121,19 +121,6 @@ class runCom8MoTPSAAlgorithm(QgsProcessingAlgorithm):
             optional=True,
             defaultValue="",
             types=[QgsProcessing.TypeVectorAnyGeometry]
-        ))
-
-        self.addParameter(QgsProcessingParameterEnum(
-            self.FRICTSIZE,
-            self.tr('Avalanche size'),
-            options=[self.tr('Default (auto)'),
-                     self.tr('Large; Release >= 60.000m3'),
-                     self.tr('Medium; 25.000m3 <= Release < 60.000m3'),
-                     self.tr('Small; Release < 25.000m3'),
-                     self.tr('Use setting from cfg.ini')
-                     ],
-            defaultValue=0,
-            allowMultiple=False
         ))
 
         # dataType_param = QgsProcessingParameterEnum(self.DATA_TYPE,
@@ -199,11 +186,6 @@ class runCom8MoTPSAAlgorithm(QgsProcessingAlgorithm):
 
         sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
 
-        # get the friction size
-        frictSIZE = self.parameterAsInt(parameters, self.FRICTSIZE, context)
-        frictOptions = ['auto', 'large', 'medium', 'small', 'ini']
-        frictString = frictOptions[frictSIZE]
-
         # create folder structure (targetDir is the tmp one)
         finalTargetDir, targetDir = cF.createFolderStructure(sourceFOLDEST)
 
@@ -245,8 +227,6 @@ class runCom8MoTPSAAlgorithm(QgsProcessingAlgorithm):
             rasterResults = cF.getLatestPeakCom8(finalTargetDir)
         except:
             raise QgsProcessingException(self.tr('Something went wrong with com8MoTPSA, please check log files'))
-
-        print(rasterResults)
 
         allRasterLayers = cF.addStyleToCom1DFAResults(rasterResults)
 
