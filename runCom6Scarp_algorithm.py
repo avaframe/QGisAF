@@ -22,30 +22,32 @@
  ***************************************************************************/
 """
 
-__author__ = 'AvaFrame Team'
-__date__ = '2025'
-__copyright__ = '(C) 2025 by AvaFrame Team'
+__author__ = "AvaFrame Team"
+__date__ = "2025"
+__copyright__ = "(C) 2025 by AvaFrame Team"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 from pathlib import Path
 
 from qgis.PyQt.QtCore import QCoreApplication
-from qgis.core import (QgsProcessing,
-                       QgsRasterLayer,
-                       QgsProcessingException,
-                       QgsProcessingAlgorithm,
-                       QgsProcessingContext,
-                       QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterRasterLayer,
-                       QgsProcessingParameterEnum,
-                       QgsProcessingParameterMultipleLayers,
-                       QgsProcessingParameterFolderDestination,
-                       QgsProcessingOutputVectorLayer,
-                       QgsProcessingParameterDefinition,
-                       QgsProcessingOutputMultipleLayers)
+from qgis.core import (
+    QgsProcessing,
+    QgsRasterLayer,
+    QgsProcessingException,
+    QgsProcessingAlgorithm,
+    QgsProcessingContext,
+    QgsProcessingParameterFeatureSource,
+    QgsProcessingParameterRasterLayer,
+    QgsProcessingParameterEnum,
+    QgsProcessingParameterMultipleLayers,
+    QgsProcessingParameterFolderDestination,
+    QgsProcessingOutputVectorLayer,
+    QgsProcessingParameterDefinition,
+    QgsProcessingOutputMultipleLayers,
+)
 
 
 class runCom6ScarpAlgorithm(QgsProcessingAlgorithm):
@@ -54,19 +56,15 @@ class runCom6ScarpAlgorithm(QgsProcessingAlgorithm):
     connector to work, more installation is needed. See instructions at docs.avaframe.org
     """
 
-    DEM = 'DEM'
-    REL = 'REL'
-    RELTH = 'RELTH'
-    SECREL = 'SECREL'
-    ENT = 'ENT'
-    RES = 'RES'
-    FRICTSIZE = 'FRICTSIZE'
-    OUTPUT = 'OUTPUT'
-    OUTPPR = 'OUTPPR'
-    FOLDEST = 'FOLDEST'
+    DEM = "DEM"
+    COORDINATES = "COORDINATES"
+    PERIMETER = "PERIMETER"
+    OUTPUT = "OUTPUT"
+    OUTPPR = "OUTPPR"
+    FOLDEST = "FOLDEST"
     ADDTONAME = "ADDTONAME"
-    SMALLAVA = 'SMALLAVA'
-    DATA_TYPE = 'DATA_TYPE'
+    SMALLAVA = "SMALLAVA"
+    DATA_TYPE = "DATA_TYPE"
 
     def initAlgorithm(self, config):
         """
@@ -74,66 +72,47 @@ class runCom6ScarpAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
-        self.addParameter(QgsProcessingParameterRasterLayer(
-            self.DEM,
-            self.tr("DEM layer")))
+        self.addParameter(
+            QgsProcessingParameterRasterLayer(self.DEM, self.tr("DEM layer"))
+        )
 
-        self.addParameter(QgsProcessingParameterMultipleLayers(
-            self.REL,
-            self.tr('Release layer(s)'),
-            layerType=QgsProcessing.TypeVectorAnyGeometry
-        ))
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.COORDINATES,
+                self.tr("Coordinate layer"),
+                defaultValue="",
+                types=[QgsProcessing.TypeVectorPoint],
+            )
+        )
 
-        self.addParameter(QgsProcessingParameterFeatureSource(
-            self.SECREL,
-            self.tr('Secondary release layer (only one is allowed)'),
-            optional=True,
-            defaultValue="",
-            types=[QgsProcessing.TypeVectorAnyGeometry]
-        ))
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.PERIMETER,
+                self.tr("Perimeter Layer"),
+                defaultValue="",
+                types=[QgsProcessing.TypeVectorAnyGeometry],
+            )
+        )
 
-        self.addParameter(QgsProcessingParameterFeatureSource(
-            self.ENT,
-            self.tr('Entrainment layer (only one is allowed)'),
-            optional=True,
-            defaultValue="",
-            types=[QgsProcessing.TypeVectorAnyGeometry]
-        ))
+        self.addParameter(
+            QgsProcessingParameterFolderDestination(
+                self.FOLDEST, self.tr("Destination folder")
+            )
+        )
 
-        self.addParameter(QgsProcessingParameterFeatureSource(
-            self.RES,
-            self.tr('Resistance layer (only one is allowed)'),
-            optional=True,
-            defaultValue="",
-            types=[QgsProcessing.TypeVectorAnyGeometry]
-        ))
+        self.addOutput(
+            QgsProcessingOutputVectorLayer(
+                self.OUTPUT,
+                self.tr("Output layer"),
+                QgsProcessing.TypeVectorAnyGeometry,
+            )
+        )
 
-        self.addParameter(QgsProcessingParameterEnum(
-            self.FRICTSIZE,
-            self.tr('Avalanche size'),
-            options=[self.tr('Default (auto)'),
-                     self.tr('Large; Release >= 60.000m3'),
-                     self.tr('Medium; 25.000m3 <= Release < 60.000m3'),
-                     self.tr('Small; Release < 25.000m3'),
-                     self.tr('Use setting from cfg.ini')
-                     ],
-            defaultValue=0,
-            allowMultiple=False
-        ))
-
-        self.addParameter(QgsProcessingParameterFolderDestination(
-            self.FOLDEST,
-            self.tr('Destination folder')
-        ))
-
-        self.addOutput(QgsProcessingOutputVectorLayer(
-            self.OUTPUT,
-            self.tr("Output layer"),
-            QgsProcessing.TypeVectorAnyGeometry))
-
-        self.addOutput(QgsProcessingOutputMultipleLayers(
-            self.OUTPPR,
-        ))
+        self.addOutput(
+            QgsProcessingOutputMultipleLayers(
+                self.OUTPPR,
+            )
+        )
 
     def flags(self):
         return super().flags()
@@ -146,102 +125,80 @@ class runCom6ScarpAlgorithm(QgsProcessingAlgorithm):
         import avaframe.version as gv
         from . import avaframeConnector_commonFunc as cF
 
-        feedback.pushInfo('AvaFrame Version: ' + gv.getVersion())
+        feedback.pushInfo("AvaFrame Version: " + gv.getVersion())
 
-        targetADDTONAME = ''
+        targetADDTONAME = ""
 
-        sourceDEM = self.parameterAsRasterLayer(parameters, self.DEM, context)
-        if sourceDEM is None:
-            raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
+        # sourceDEM = self.parameterAsRasterLayer(parameters, self.DEM, context)
+        # if sourceDEM is None:
+        #     raise QgsProcessingException(self.invalidSourceError(parameters, self.DEM))
+        #
+        # sourcePerimeter = self.parameterAsVectorLayer(
+        #     parameters, self.PERIMETER, context
+        # )
+        #
+        # sourceCoordinates = self.parameterAsVectorLayer(
+        #     parameters, self.COORDINATES, context
+        # )
+        #
+        # sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
+        #
+        # finalTargetDir, targetDir = cF.createFolderStructure(sourceFOLDEST)
+        #
+        # feedback.pushInfo(sourceDEM.source())
+        #
+        # cF.copyDEM(sourceDEM, targetDir)
+        #
+        # cF.copyShp(sourcePerimeter.source(), targetDir / "Inputs" / "POLYGONS")
+        #
+        # feedback.pushInfo('Starting the simulations')
+        # feedback.pushInfo('This might take a while')
+        # feedback.pushInfo('See console for progress')
+        #
+        # command = ['python', '-m', 'avaframe.runCom6Scarp', str(targetDir), '-fc', str(frictString)]
+        # cF.runAndCheck(command, self, feedback)
+        #
+        # feedback.pushInfo('Done, start loading the results')
+        #
+        # cF.moveInputAndOutputFoldersToFinal(targetDir, finalTargetDir)
+        #
+        # try:
+        #     rasterResults = cF.getLatestPeak(finalTargetDir)
+        # except:
+        #     raise QgsProcessingException(self.tr('Something went wrong with com6Scarp, please check log files'))
+        #
+        # allRasterLayers = cF.addStyleToCom6ScarpResults(rasterResults)
+        #
+        # context = cF.addLayersToContext(context, allRasterLayers, self.OUTPPR)
 
-        allREL = self.parameterAsLayerList(parameters, self.REL, context)
-        if allREL is None:
-            raise QgsProcessingException(self.invalidSourceError(parameters, self.REL))
-
-        relDict = {}
-        if allREL:
-            relDict = {lyr.source(): lyr for lyr in allREL}
-
-        sourceSecREL = self.parameterAsVectorLayer(parameters, self.SECREL, context)
-        if sourceSecREL is not None:
-            srInfo = '_sec' + Path(sourceSecREL.source()).stem
-            targetADDTONAME = targetADDTONAME + srInfo
-
-        sourceENT = self.parameterAsVectorLayer(parameters, self.ENT, context)
-
-        sourceRES = self.parameterAsVectorLayer(parameters, self.RES, context)
-
-        sourceFOLDEST = self.parameterAsFile(parameters, self.FOLDEST, context)
-
-        frictSIZE = self.parameterAsInt(parameters, self.FRICTSIZE, context)
-        frictOptions = ['auto', 'large', 'medium', 'small', 'ini']
-        frictString = frictOptions[frictSIZE]
-
-        finalTargetDir, targetDir = cF.createFolderStructure(sourceFOLDEST)
-
-        feedback.pushInfo(sourceDEM.source())
-
-        cF.copyDEM(sourceDEM, targetDir)
-
-        cF.copyMultipleShp(relDict, targetDir / 'Inputs' / 'REL', targetADDTONAME)
-
-        if sourceSecREL is not None:
-            cF.copyShp(sourceSecREL.source(), targetDir / 'Inputs' / 'SECREL')
-
-        if sourceENT is not None:
-            cF.copyShp(sourceENT.source(), targetDir / 'Inputs' / 'ENT')
-
-        if sourceRES is not None:
-            cF.copyShp(sourceRES.source(), targetDir / 'Inputs' / 'RES')
-
-        feedback.pushInfo('Starting the simulations')
-        feedback.pushInfo('This might take a while')
-        feedback.pushInfo('See console for progress')
-
-        command = ['python', '-m', 'avaframe.runCom6Scarp', str(targetDir), '-fc', str(frictString)]
-        cF.runAndCheck(command, self, feedback)
-
-        feedback.pushInfo('Done, start loading the results')
-
-        cF.moveInputAndOutputFoldersToFinal(targetDir, finalTargetDir)
-
-        try:
-            rasterResults = cF.getLatestPeak(finalTargetDir)
-        except:
-            raise QgsProcessingException(self.tr('Something went wrong with com6Scarp, please check log files'))
-
-        allRasterLayers = cF.addStyleToCom6ScarpResults(rasterResults)
-
-        context = cF.addLayersToContext(context, allRasterLayers, self.OUTPPR)
-
-        feedback.pushInfo('\n---------------------------------')
-        feedback.pushInfo('Done, find results and logs here:')
-        feedback.pushInfo(str(finalTargetDir.resolve()))
-        feedback.pushInfo('---------------------------------\n')
+        feedback.pushInfo("\n---------------------------------")
+        feedback.pushInfo("Done, find results and logs here:")
+        # feedback.pushInfo(str(finalTargetDir.resolve()))
+        feedback.pushInfo("---------------------------------\n")
 
         return {self.OUTPPR: allRasterLayers}
 
     def name(self):
-        return 'com6scarp'
+        return "com6scarp"
 
     def displayName(self):
-        return self.tr('Scarp (com6)')
+        return self.tr("Scarp (com6)")
 
     def group(self):
         return self.tr(self.groupId())
 
     def groupId(self):
-        return 'RockAvalancheExperimental'
+        return "RockAvalancheExperimental"
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
+        return QCoreApplication.translate("Processing", string)
 
     def shortHelpString(self) -> str:
-        hstring = 'Runs scarp  via module com6Scarp. \n\
+        hstring = "Runs scarp  via module com6Scarp. \n\
                 For more information go to (or use the help button below): \n\
                 AvaFrame Documentation: https://docs.avaframe.org\n\
                 Homepage: https://avaframe.org\n\
-                Praxisleitfaden: https://avaframe.org/reports\n'
+                Praxisleitfaden: https://avaframe.org/reports\n"
 
         return self.tr(hstring)
 
