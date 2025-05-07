@@ -66,7 +66,7 @@ def find_python():
 try:
     import avaframe
 except ModuleNotFoundError:
-    subprocess.call(["pip3", "install", "--upgrade", "--user", "pandas", "numpy"])
+    # subprocess.call(["pip3", "install", "--upgrade", "--user", "pandas", "numpy"])
     subprocess.call(["pip3", "install", "avaframe", "--user"])
     try:
         import avaframe
