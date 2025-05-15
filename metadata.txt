@@ -16,8 +16,8 @@ about=Connecting AvaFrame and QGis.
     the Admin Group (in your toolbox)
 
 
-tracker=https://github.com/avaframe/QGisAF
-repository=https://github.com/avaframe/QGisAF
+tracker=https://github.com/OpenNHM/QGisAF
+repository=https://github.com/OpenNHM/QGisAF
 # End of mandatory metadata
 
 # Recommended items:
